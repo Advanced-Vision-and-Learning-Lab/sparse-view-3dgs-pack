@@ -9,7 +9,8 @@ pip install plyfile
 pip install open3d
 pip install imageio
 pip install timm
-pip install opencv_python
+pip install opencv-python
+pip install scikit-image
 pip install --no-build-isolation ninja
 
 pip install FSGS/submodules/diff-gaussian-rasterization-confidence
@@ -17,5 +18,14 @@ pip install FSGS/submodules/simple-knn
 
 pip install gaussian-splatting/submodules/diff-gaussian-rasterization
 pip install gaussian-splatting/submodules/simple-knn
+pip install gaussian-splatting/submodules/fused-ssim
+
 
 pip install DNGaussian/submodules/diff-gaussian-rasterization
+pip install DNGaussian/submodules/simple-knn
+pip install DNGaussian/gridencoder
+pip install DNGaussian/shencoder
+
+
+python gaussian-splatting/train.py  --source_path /home/grads/a/atharvagashe22/AVLL/3DR/3DGS/data/bicycle --model_path gaussian-splatting/output/bicycle 
+python FSGS/train.py  --source_path /home/grads/a/atharvagashe22/AVLL/3DR/FSGS/dataset/mipnerf360/bicycle --model_path output/bicycle  --eval  --n_views 24 --depth_pseudo_weight 0.03
