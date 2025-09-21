@@ -1,6 +1,6 @@
 setup.py
-/disk2/lijiahe/dngaussian-code/gridencoder/src/bindings.cpp
-/disk2/lijiahe/dngaussian-code/gridencoder/src/gridencoder.cu
+/home/grads/a/atharvagashe22/AVLL/3DR/test/FS3DGS-Benchmarking/DNGaussian/gridencoder/src/bindings.cpp
+/home/grads/a/atharvagashe22/AVLL/3DR/test/FS3DGS-Benchmarking/DNGaussian/gridencoder/src/gridencoder.cu
 gridencoder.egg-info/PKG-INFO
 gridencoder.egg-info/SOURCES.txt
 gridencoder.egg-info/dependency_links.txt

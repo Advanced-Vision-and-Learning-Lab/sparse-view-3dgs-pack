@@ -4,25 +4,33 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 _src_path = os.path.dirname(os.path.abspath(__file__))
 
+# Use C++17 and target Ada (RTX 4090, SM 8.9)
 nvcc_flags = [
-    '-O3', '-std=c++14',
-    '-U__CUDA_NO_HALF_OPERATORS__', '-U__CUDA_NO_HALF_CONVERSIONS__', '-U__CUDA_NO_HALF2_OPERATORS__',
+    "-O3",
+    "-std=c++17",
+    "-Xcompiler", "-std=c++17",
+    "-U__CUDA_NO_HALF_OPERATORS__", "-U__CUDA_NO_HALF_CONVERSIONS__", "-U__CUDA_NO_HALF2_OPERATORS__",
+    "-gencode=arch=compute_89,code=sm_89",
+    "-gencode=arch=compute_89,code=compute_89",
+    "-D_GLIBCXX_USE_CXX11_ABI=1",
 ]
 
 if os.name == "posix":
-    c_flags = ['-O3', '-std=c++14']
+    c_flags = ["-O3", "-std=c++17", "-D_GLIBCXX_USE_CXX11_ABI=1"]
 elif os.name == "nt":
-    c_flags = ['/O2', '/std:c++17']
+    c_flags = ["/O2", "/std:c++17"]
 
     # find cl.exe
     def find_cl_path():
         import glob
         for edition in ["Enterprise", "Professional", "BuildTools", "Community"]:
-            paths = sorted(glob.glob(r"C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\%s\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64" % edition), reverse=True)
+            paths = sorted(
+                glob.glob(r"C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\%s\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64" % edition),
+                reverse=True
+            )
             if paths:
                 return paths[0]
 
-    # If cl.exe is not on path, try to find it.
     if os.system("where cl.exe >nul 2>nul") != 0:
         cl_path = find_cl_path()
         if cl_path is None:
@@ -30,21 +38,20 @@ elif os.name == "nt":
         os.environ["PATH"] += ";" + cl_path
 
 setup(
-    name='shencoder', # package name, import this to use python API
+    name="shencoder",
     ext_modules=[
         CUDAExtension(
-            name='_shencoder', # extension name, import this to use CUDA API
-            sources=[os.path.join(_src_path, 'src', f) for f in [
-                'shencoder.cu',
-                'bindings.cpp',
+            name="_shencoder",
+            sources=[os.path.join(_src_path, "src", f) for f in [
+                "shencoder.cu",
+                "bindings.cpp",
             ]],
             extra_compile_args={
-                'cxx': c_flags,
-                'nvcc': nvcc_flags,
+                "cxx": c_flags,
+                "nvcc": nvcc_flags,
             }
         ),
     ],
-    cmdclass={
-        'build_ext': BuildExtension,
-    }
+    cmdclass={"build_ext": BuildExtension},
 )
+

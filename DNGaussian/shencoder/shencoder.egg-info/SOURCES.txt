@@ -1,6 +1,6 @@
 setup.py
-/home/ub/Desktop/sparse3dgs/shencoder/src/bindings.cpp
-/home/ub/Desktop/sparse3dgs/shencoder/src/shencoder.cu
+/home/grads/a/atharvagashe22/AVLL/3DR/test/FS3DGS-Benchmarking/DNGaussian/shencoder/src/bindings.cpp
+/home/grads/a/atharvagashe22/AVLL/3DR/test/FS3DGS-Benchmarking/DNGaussian/shencoder/src/shencoder.cu
 shencoder.egg-info/PKG-INFO
 shencoder.egg-info/SOURCES.txt
 shencoder.egg-info/dependency_links.txt
