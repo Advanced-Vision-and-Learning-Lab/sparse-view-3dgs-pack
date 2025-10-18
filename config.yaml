@@ -1,0 +1,91 @@
+defaults:
+# global default (applies to everyone)
+  env:
+    CUDA_VISIBLE_DEVICES: "0"
+  common_args:
+    disable_viewer: true
+    quiet: true
+    detect_anomaly: false
+  dataset_root: /home/grads/a/atharvagashe22/AVLL/3DR/FSGS/dataset/nerf_llff_data 
+  out_root: ./bench_runs
+  seeds: [42]
+  run_render: true          
+  run_metrics: true   
+
+
+scenes:
+  - name: "bicycle"
+    source_path: "${defaults.dataset_root}/bicycle"                
+
+models:
+  - name: "3dgs"
+    repo_dir: ./gaussian-splatting                                  
+    entry: ./train.py
+    render_entry: ./render.py
+    metrics_entry: ./metrics.py
+    needs_cfg_args_file: true       
+                                   
+    arg_map:
+      source_path: source_path
+      model_path: model_path
+      sh_degree: sh_degree
+      iterations: iterations
+      test_iterations: test_iterations
+      save_iterations: save_iterations
+      debug_from: debug_from
+      eval: eval 
+
+    args:
+      iterations: 1000
+      sh_degree: 3
+      test_iterations: [1000]
+      save_iterations: [1000]
+      eval: true 
+      # images: images_8
+      # pipeline:
+      #   convert_SHs_python: false
+      #   compute_cov3D_python: false
+      #   antialiasing: false
+      # optim:
+      #   feature_lr: 0.0025
+      #   opacity_lr: 0.025
+      #   scaling_lr: 0.005
+      #   rotation_lr: 0.001
+      #   lambda_dssim: 0.2
+  - name: "fsgs"
+    repo_dir: ./FSGS
+    entry: ./train.py
+    render_entry: ./render.py
+    metrics_entry: ./metrics.py
+    needs_cfg_args_file: false
+    run_render: true
+    run_metrics: true
+
+    arg_map:
+      source_path: source_path
+      model_path: model_path
+      eval: eval
+      n_views: n_views
+      depth_pseudo_weight: depth_pseudo_weight
+      sh_degree: sh_degree
+      iterations: iterations
+
+    args:
+      sh_degree: 3
+      iterations: 1000
+      test_iterations: [1000]
+      save_iterations: [1000]
+      eval: true
+      n_views: 3
+      depth_pseudo_weight: 0.03
+
+# grid:
+#   sh_degree: [2, 3]
+#   iterations: [15000, 30000]
+#   seeds: [13, 42]
+
+# overrides:
+#   3dgs-official:
+#     garden:
+#       args:
+#         iterations: 20000

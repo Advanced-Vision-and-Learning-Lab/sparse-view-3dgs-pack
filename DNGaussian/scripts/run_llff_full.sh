@@ -12,5 +12,5 @@ CATEGORIES=("fortress")
 
 for cat in "${CATEGORIES[@]}"; do
     echo "=== Running category: $cat ==="
-    bash scripts/run_llff.sh "${DATA_ROOT}/${cat}" "${OUT_ROOT}/${cat}" ${GPU_ID}
+    bash DNGaussian/scripts/run_llff.sh "${DATA_ROOT}/${cat}" "${OUT_ROOT}/${cat}" ${GPU_ID}
 done
