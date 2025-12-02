@@ -30,3 +30,18 @@ pip install DNGaussian/shencoder
 python gaussian-splatting/train.py  --source_path /home/grads/a/atharvagashe22/AVLL/3DR/3DGS/data/bicycle --model_path gaussian-splatting/output/bicycle 
 python FSGS/train.py  --source_path /home/grads/a/atharvagashe22/AVLL/3DR/FSGS/dataset/mipnerf360/bicycle --model_path output/bicycle  --eval  --n_views 24 --depth_pseudo_weight 0.03
 bash ./DNGaussian/scripts/run_llff_full.sh
+
+
+
+find . -type d -name "*.egg-info" -exec rm -rf {} +
+rm -rf build dist
+
+
+conda install -y cmake ninja openssl
+
+
+Typical Release Flow
+rm -rf dist build *.egg-info
+python -m build
+tar -tzf dist/fs3dgs_benchmark-0.3.2.tar.gz | grep FSGS
+twine upload --repository testpypi dist/fs3dgs_benchmark-0.3.2.tar.gz
