@@ -1,3 +1,10 @@
 output
 *.egg-info
 bench_runs
+gaussian-splatting/test-colmap
+data
+
+*.egg-info/
+build
+dist/
+__pycache__/

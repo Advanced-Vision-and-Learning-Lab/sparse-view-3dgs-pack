@@ -1,0 +1,17 @@
+include README.md
+recursive-include fs3dgs_benchmark *
+
+# Exclude build artifacts and large files
+prune **/__pycache__
+prune **/*.egg-info
+prune **/build
+prune **/dist
+prune **/*.so
+prune **/*.o
+prune **/*.pt
+prune **/*.ply
+prune **/*.png
+prune **/*.jpg
+prune **/*.jpeg
+prune **/*.mp4
+prune **/venv
