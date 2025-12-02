@@ -1,0 +1,22 @@
+# bench_example/global.yaml
+# Use this as the top-level config that holds only globals, scenes, and a pointer to models_dir
+defaults:
+  env:
+    CUDA_VISIBLE_DEVICES: "0"
+  common_args:
+    disable_viewer: true
+    quiet: true
+    detect_anomaly: false
+  dataset_root: /home/grads/a/atharvagashe22/AVLL/3DR/FSGS/dataset/nerf_llff_data
+  out_root: ./bench_runs
+  seeds: [42]
+  run_render: true
+  run_metrics: true
+
+# Keep scenes here (or auto-discover using dataset_root)
+scenes:
+  - name: fern
+    source_path: "${defaults.dataset_root}/fern"
+
+# NEW: point to a directory of per-model YAML files
+models_dir: ./model_configs
