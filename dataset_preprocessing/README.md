@@ -25,9 +25,7 @@ folder:
 
 The following diagram illustrates the dataset pipeline workflow:
 
-![Dataset Pipeline Flow](docs/pipeline_flow.png)
-
-*(Place your flowchart image as `docs/pipeline_flow.png`.)*
+![Dataset Pipeline Flow](docs/dataset_preprocessing_pipeline.png)
 
 ------------------------------------------------------------------------
 
