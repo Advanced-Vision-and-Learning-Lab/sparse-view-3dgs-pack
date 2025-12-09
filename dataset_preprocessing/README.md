@@ -1,17 +1,26 @@
-# Dataset Pipeline
+# Dataset Preprocessing Pipeline
 
 ## Overview
 
 This repository contains a modular dataset preprocessing pipeline for
-generating **full COLMAP reconstructions** and **few-shot sparse/dense
-reconstructions**.\
-The pipeline supports **LLFF** and **MipNeRF360** datasets, includes
-dataset-aware SIFT feature selection, and automatically skips stages
-that have already been completed.
+generating:
+
+-   **Full COLMAP reconstructions**
+-   **Few-shot sparse and dense reconstructions**
+
+The pipeline supports the following input sources:
+-   **Standard benchmark datasets:** LLFF, Mip-NeRF 360
+-   **Custom user-provided datasets:** Any folder of images placed in the required `input/` format
+
+It includes: - Dataset-aware SIFT feature selection - Automatic skipping
+of completed stages - Support for full and few-shot reconstruction
+workflows
 
 **Important:**\
 All raw input images for each scene must be placed inside the `input/`
-folder:
+directory.
+
+Example:
 
     datasets/
         bonsai/
@@ -37,11 +46,15 @@ The following diagram illustrates the dataset pipeline workflow:
 python data_pipeline.py     --base_path /path/to/datasets     --scene bonsai     --stage full     --n_views 10     --dataset llff
 ```
 
+------------------------------------------------------------------------
+
 ### Stage 1 Only --- Full COLMAP Reconstruction
 
 ``` bash
 python data_pipeline.py     --base_path /path/to/datasets     --scene bonsai     --stage part1     --dataset llff
 ```
+
+------------------------------------------------------------------------
 
 ### Stage 2 Only --- Few-Shot Reconstruction
 
@@ -53,21 +66,44 @@ python data_pipeline.py     --base_path /path/to/datasets     --scene bonsai    
 
 ## Key Arguments
 
-  Argument               Description                            Required
-  ---------------------- -------------------------------------- ---------------------------
-  `--base_path`          Root directory containing all scenes   Yes
-  `--scene`              Scene folder name                      Yes
-  `--stage`              `full`, `part1`, `part2`               Yes
-  `--n_views`            Views for few-shot stage               Required for `part2/full`
-  `--dataset`            `llff` or `mipnerf360`                 Recommended
-  `--downscale`          Image downscale factor                 Optional
-  `--max_num_features`   Override SIFT limit                    Optional
+### Required Arguments
+
+-   **`--base_path`**\
+    Root directory containing all scene folders.
+
+-   **`--scene`**\
+    Name of the scene folder inside the base path.
+
+-   **`--stage`**\
+    Pipeline stage to execute:\
+    `full` = runs both part1 and part2\
+    `part1` = full COLMAP reconstruction only\
+    `part2` = few-shot reconstruction only
+
+### Conditionally Required
+
+-   **`--n_views`**\
+    Number of views to use during few-shot reconstruction.\
+    This argument is required when using `--stage part2` or
+    `--stage full`.
+
+### Optional Arguments
+
+-   **`--dataset`**\
+    Dataset type. Supported values: `llff`, `mipnerf360`, or `custom`.\
+    Use `custom` when providing your own images.
+
+-   **`--downscale`**\
+    Downscale factor applied to input images before reconstruction.
+
+-   **`--max_num_features`**\
+    Manually override the default SIFT feature limit.
 
 ------------------------------------------------------------------------
 
 ## Output Structure
 
-After running the pipeline, your directory should look like:
+After running the pipeline, your scene directory will look like:
 
     scene/
         input/
@@ -83,13 +119,101 @@ After running the pipeline, your directory should look like:
 
 ## Notes
 
--   Raw images must always be inside `input/` before running.
--   SIFT features auto-selected: LLFF → 32768, MipNeRF360 → 16384.
--   Stages are skipped if outputs already exist.
--   `part2` requires `images/` + `sparse/0/`.
+-   Raw images must always be placed inside `input/` before running the
+    pipeline.
+-   You may use either **standard datasets (LLFF, Mip-NeRF 360)** or
+    **your own custom image collections**.
+-   SIFT features are automatically selected:
+    -   LLFF → 32768 features
+    -   Mip-NeRF 360 → 16384 features
+-   Pipeline stages are automatically skipped if outputs already exist.
+-   `part2` requires both `images/` and `sparse/0/` to be present.
 
 ------------------------------------------------------------------------
 
-## Citation
+## Supported Standard Datasets and Citations
 
---
+This project relies on publicly available benchmark datasets.\
+If you use any of the following datasets, please cite the corresponding
+papers.
+
+------------------------------------------------------------------------
+
+### LLFF (Local Light Field Fusion)
+
+**Paper:**\
+Local Light Field Fusion: Practical View Synthesis with Prescriptive
+Sampling Guidelines\
+Ben Mildenhall et al., ACM TOG 2019
+
+**BibTeX:**
+
+``` bibtex
+@article{mildenhall2019local,
+  title={Local light field fusion: Practical view synthesis with prescriptive sampling guidelines},
+  author={Mildenhall, Ben and Srinivasan, Pratul P and Ortiz-Cayon, Rodrigo and Kalantari, Nima Khademi and Ramamoorthi, Ravi and Ng, Ren and Kar, Abhishek},
+  journal={ACM Transactions on Graphics (ToG)},
+  volume={38},
+  number={4},
+  pages={1--14},
+  year={2019},
+  publisher={ACM New York, NY, USA}
+}
+```
+
+------------------------------------------------------------------------
+
+### Mip-NeRF 360
+
+**Paper:**\
+Mip-NeRF 360: Unbounded Anti-Aliased Neural Radiance Fields\
+Jonathan T. Barron et al., CVPR 2022
+
+**BibTeX:**
+
+``` bibtex
+@inproceedings{barron2022mip,
+  title={Mip-nerf 360: Unbounded anti-aliased neural radiance fields},
+  author={Barron, Jonathan T and Mildenhall, Ben and Verbin, Dor and Srinivasan, Pratul P and Hedman, Peter},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={5470--5479},
+  year={2022}
+}
+```
+
+------------------------------------------------------------------------
+
+## Code Acknowledgements
+
+This project builds upon and adapts implementations from the following
+open-source research repositories:
+
+------------------------------------------------------------------------
+
+### 3D Gaussian Splatting
+
+**GitHub:**\
+https://github.com/graphdeco-inria/gaussian-splatting
+
+------------------------------------------------------------------------
+
+### FSGS (Few-Shot Gaussian Splatting)
+
+**GitHub:**\
+https://github.com/VITA-Group/FSGS/tree/main
+
+------------------------------------------------------------------------
+
+### LLFF Codebase
+
+**GitHub:**\
+https://github.com/Fyusion/LLFF
+
+------------------------------------------------------------------------
+
+## Dataset and Code Usage Disclaimer
+
+This repository contains original code and adaptations based on publicly
+available research implementations. All third-party datasets, methods,
+and code remain the property of their respective authors and are used in
+accordance with their licenses.
