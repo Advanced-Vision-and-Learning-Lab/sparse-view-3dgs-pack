@@ -12,9 +12,6 @@ The pipeline supports the following input sources:
 -   **Standard benchmark datasets:** LLFF, Mip-NeRF 360
 -   **Custom user-provided datasets:** Any folder of images placed in the required `input/` format
 
-It includes: - Dataset-aware SIFT feature selection - Automatic skipping
-of completed stages - Support for full and few-shot reconstruction
-workflows
 
 **Important:**\
 All raw input images for each scene must be placed inside the `input/`
