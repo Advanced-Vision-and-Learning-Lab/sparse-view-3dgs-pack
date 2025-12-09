@@ -1,7 +1,7 @@
 
 # FS3DGS Benchmarking Pipeline
 ![Benchmarking](../image/fsgs_benchmarking.png)
-
+The figure is adapted from <a href="https://arxiv.org/abs/2202.08341">Anomalib</a> for comparison.
 ---
 This is the unified benchmarking pipeline for evaluating 3D Gaussian Splatting–based methods such as **3DGS**, **FSGS**, and other variants.
   
