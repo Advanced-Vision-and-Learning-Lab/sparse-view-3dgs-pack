@@ -1,6 +1,6 @@
 
 # FS3DGS Benchmarking Pipeline
-![Benchmarking](image/fsgs_benchmarking.png)
+![Benchmarking](../image/fsgs_benchmarking.png)
 
 ---
 This is the unified benchmarking pipeline for evaluating 3D Gaussian Splatting–based methods such as **3DGS**, **FSGS**, and other variants.
