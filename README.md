@@ -2,7 +2,7 @@
 
 This repository implements **DWT 3DGS**, an enhanced version of 3D Gaussian Splatting that incorporates Discrete Wavelet Transform (DWT) loss functions to improve high-frequency detail preservation and reconstruction quality.
 
-![Method Overview](image/method1.png)
+![Method Overview](assets/method1.png)
 
 ---
 
@@ -10,7 +10,7 @@ This repository implements **DWT 3DGS**, an enhanced version of 3D Gaussian Spla
 
 DWT 3DGS extends the standard 3D Gaussian Splatting pipeline by incorporating wavelet-domain loss functions. The method applies a 2-level Haar wavelet decomposition to both predicted and ground truth images, computing Charbonnier losses on selected subbands. This enables better preservation of fine details and improved reconstruction of high-frequency content.
 
-![Wavelet Decomposition](image/wavlet_dec.png)
+![Wavelet Decomposition](assets/wavlet_dec.png)
 
 The wavelet decomposition separates images into multiple frequency subbands:
 
@@ -21,7 +21,7 @@ The wavelet decomposition separates images into multiple frequency subbands:
 
 By weighting different subbands, the method can emphasize low-frequency structure while still capturing important high-frequency details.
 
-![Results](image/result.png)
+![Results](assets/result.png)
 
 ---
 
@@ -34,7 +34,7 @@ DWT 3DGS enhances 3D Gaussian Splatting by:
 3. **Adaptive Scaling**: Using running-mean ratio scaling to balance DWT loss with the base L1 + SSIM loss  
 4. **GPU Optimization**: Fast GPU-accelerated wavelet decomposition using pure PyTorch operations  
 
-![Low Frequency](image/LF.png)
+![Low Frequency](assets/LF.png)
 
 The method is particularly effective at preserving high-frequency details that are often lost in standard reconstruction approaches, while maintaining the real-time rendering capabilities of 3D Gaussian Splatting.
 
@@ -44,9 +44,9 @@ The method is particularly effective at preserving high-frequency details that a
 
 This codebase supports training on **multispectral datasets**, which capture information across multiple spectral bands beyond the visible RGB spectrum. Multispectral imaging enables enhanced analysis and reconstruction of scenes with rich spectral information, making it valuable for applications in agriculture, remote sensing, and scientific imaging.
 
-![Multispectral Results](image/multispectral_result.png)
+![Multispectral Results](assets/multispectral_result.png)
 
-![Spectral Grid](image/spectral_grid_3plants.png)
+![Spectral Grid](assets/spectral_grid_3plants.png)
 
 **Important**: For multispectral datasets, you should run the **multispectral DWT 3DGS** variant. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum.
 
@@ -84,7 +84,7 @@ pip install submodules/diff-gaussian-rasterization
 pip install submodules/simple-knn
 ```
 
-![Setup](image/setup.png)
+![Setup](assets/setup.png)
 
 ---
 
@@ -273,7 +273,7 @@ This will:
 
 ## Benchmarking
 
-![Benchmarking](image/fsgs_benchmarking.png)
+![Benchmarking](assets/fsgs_benchmarking.png)
 
 The method has been evaluated on standard 3DGS benchmarks. The DWT loss improves reconstruction quality, particularly for high-frequency details, while maintaining real-time rendering performance.
 
