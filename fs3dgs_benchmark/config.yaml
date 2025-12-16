@@ -13,88 +13,83 @@ defaults:
   seeds: [42]
   run_render: true          
   run_metrics: true   
-  run_desc: "fsgs-3dgs-smoketest"   # <-- you set this per run
+  run_desc: "benchmark"   # <-- you set this per run
 
-scenes:
-  - name: "sorghum"
-    source_path: "${defaults.dataset_root}/sorghum"                
+# scenes:
+#   - name: "sorghum"
+#     source_path: "${defaults.dataset_root}/sorghum"                
   # - name: "trex"
   #   source_path: "${defaults.dataset_root}/trex"  
+
+
 models:
-  # - name: "3dgs"
-  #   repo_dir: ./fs3dgs_benchmark/gaussian-splatting                                  
-  #   entry: ./train.py
-  #   render_entry: ./render.py
-  #   metrics_entry: ./metrics.py
-  #   needs_cfg_args_file: true       
+  - name: "3dgs"
+    repo_dir: ./fs3dgs_benchmark/gaussian-splatting                                  
+    entry: ./train.py
+    render_entry: ./render.py
+    metrics_entry: ./metrics.py
+    needs_cfg_args_file: true       
 
+                        
+    arg_map:
+      source_path: source_path
+      model_path: model_path
+      sh_degree: sh_degree
+      iterations: iterations
+      test_iterations: test_iterations
+      save_iterations: save_iterations
+      debug_from: debug_from
+      eval: eval 
 
-  #   #     # ✅ Add these lines:
-  #   # preprocess_entry: convert.py      # or ./run-colmap-geometric.sh
-  #   # preprocess_dataset: true                   # optional: force run first time
-                         
-  #   arg_map:
-  #     source_path: source_path
-  #     model_path: model_path
-  #     sh_degree: sh_degree
-  #     iterations: iterations
-  #     test_iterations: test_iterations
-  #     save_iterations: save_iterations
-  #     debug_from: debug_from
-  #     eval: eval 
-
-  #   args:
-  #     iterations: 1000
-  #     sh_degree: 3
-  #     test_iterations: [1000]
-  #     save_iterations: [1000]
-  #     eval: true 
+    args:
+      iterations: 1000
+      sh_degree: 3
+      test_iterations: [1000]
+      save_iterations: [1000]
+      eval: true 
 
 
 
-  #     # images: images_8
-  #     # pipeline:
-  #     #   convert_SHs_python: false
-  #     #   compute_cov3D_python: false
-  #     #   antialiasing: false
-  #     # optim:
-  #     #   feature_lr: 0.0025
-  #     #   opacity_lr: 0.025
-  #     #   scaling_lr: 0.005
-  #     #   rotation_lr: 0.001
-  #     #   lambda_dssim: 0.2
+      # images: images_8
+      # pipeline:
+      #   convert_SHs_python: false
+      #   compute_cov3D_python: false
+      #   antialiasing: false
+      # optim:
+      #   feature_lr: 0.0025
+      #   opacity_lr: 0.025
+      #   scaling_lr: 0.005
+      #   rotation_lr: 0.001
+      #   lambda_dssim: 0.2
 
 
-  # - name: "fsgs"
-  #   repo_dir: ./fs3dgs_benchmark/FSGS
-  #   entry: ./train.py
-  #   render_entry: ./render.py
-  #   metrics_entry: ./metrics.py
-  #   needs_cfg_args_file: false
-  #   run_render: true
-  #   run_metrics: true
+  - name: "fsgs"
+    repo_dir: ./fs3dgs_benchmark/FSGS
+    entry: ./train.py
+    render_entry: ./render.py
+    metrics_entry: ./metrics.py
+    needs_cfg_args_file: false
+    run_render: true
+    run_metrics: true
 
 
-  #   # # ✅ Preprocessing configuration
-  #   # preprocess_entry: tools/colmap_llff.py    # your FSGS conversion script
-  #   # preprocess_dataset: true                        # force preprocessing if missing
-  #   arg_map:
-  #     source_path: source_path
-  #     model_path: model_path
-  #     eval: eval
-  #     n_views: n_views
-  #     depth_pseudo_weight: depth_pseudo_weight
-  #     sh_degree: sh_degree
-  #     iterations: iterations
+    arg_map:
+      source_path: source_path
+      model_path: model_path
+      eval: eval
+      n_views: n_views
+      depth_pseudo_weight: depth_pseudo_weight
+      sh_degree: sh_degree
+      iterations: iterations
 
-  #   args:
-  #     sh_degree: 3
-  #     iterations: 100
-  #     test_iterations: [100]
-  #     save_iterations: [100]
-  #     eval: true
-  #     n_views: 3
-  #     depth_pseudo_weight: 0.03
+    args:
+      sh_degree: 3
+      iterations: 100
+      test_iterations: [100]
+      save_iterations: [100]
+      eval: true
+      n_views: 3
+      depth_pseudo_weight: 0.03
 
 
   - name: "lgdwt"
@@ -106,10 +101,6 @@ models:
     run_render: false
     run_metrics: false
 
-
-    # # ✅ Preprocessing configuration
-    # preprocess_entry: tools/colmap_llff.py    # your FSGS conversion script
-    # preprocess_dataset: true                        # force preprocessing if missing
     arg_map:
       source_path: source_path
       model_path: model_path
