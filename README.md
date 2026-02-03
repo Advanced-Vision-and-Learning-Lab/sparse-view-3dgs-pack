@@ -21,7 +21,7 @@ The wavelet decomposition separates images into multiple frequency subbands:
 
 By weighting different subbands, the method can emphasize low-frequency structure while still capturing important high-frequency details.
 
-![Results](assets/result.png)
+
 
 ---
 
