@@ -4,7 +4,7 @@ This repository implements **DWT 3DGS**, an enhanced version of 3D Gaussian Spla
 
 ![Method Overview](assets/method1.png)
 
----
+
 
 ## Overview
 
@@ -38,7 +38,7 @@ DWT 3DGS enhances 3D Gaussian Splatting by:
 
 The method is particularly effective at preserving high-frequency details that are often lost in standard reconstruction approaches, while maintaining the real-time rendering capabilities of 3D Gaussian Splatting.
 
----
+
 
 ## Multispectral Dataset
 
@@ -50,7 +50,7 @@ This codebase supports training on **multispectral datasets**, which capture inf
 
 **Important**: For multispectral datasets, you should run the **multispectral DWT 3DGS** variant. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum.
 
----
+
 
 ## Installation
 
@@ -86,7 +86,7 @@ pip install submodules/simple-knn
 
 ![Setup](assets/setup.png)
 
----
+
 
 ## Running DWT 3DGS
 
@@ -98,7 +98,7 @@ To train a model with DWT loss enabled (default):
 python train.py -s <path to COLMAP or NeRF Synthetic dataset>
 ```
 
----
+
 
 ### DWT-Specific Parameters
 
@@ -127,7 +127,7 @@ python train.py -s <path to dataset> \
 
 The default configuration emphasizes low-frequency components (LL1 and LL2) which typically contain the most important structural information. High-frequency subbands can be enabled for enhanced detail preservation.
 
----
+
 
 ### Rendering
 
@@ -155,7 +155,7 @@ python render.py -m <path to trained model>
 python metrics.py -m <path to trained model>
 ```
 
----
+
 
 ## Packages and Utilities
 
@@ -184,7 +184,7 @@ The main DWT functionality is implemented in `utils/loss_utils.py`:
   - `compute_wef_all_subbands()`: Compute errors for all subbands  
   - `make_wef_grid_image()`: Create grid visualizations of wavelet errors  
 
----
+
 
 ### Training Integration (`train.py`)
 
@@ -195,7 +195,6 @@ The DWT loss is seamlessly integrated into the training loop:
 - **Efficient Computation**: GPU-accelerated wavelet decomposition during training  
 - **Flexible Weighting**: Per-subband weights allow fine-grained control  
 
----
 
 ### Testing and Validation
 
@@ -211,7 +210,7 @@ The DWT loss is seamlessly integrated into the training loop:
   - Visualize wavelet subbands  
   - Experiment with different weight configurations  
 
----
+
 
 ### Dataset Readers (`scene/dataset_readers.py`)
 
@@ -221,7 +220,6 @@ Extended dataset readers support:
 - NeRF Synthetic datasets  
 - Multispectral datasets (with proper channel handling)  
 
----
 
 ### Gaussian Model (`scene/gaussian_model.py`)
 
@@ -232,7 +230,7 @@ The Gaussian model implementation supports:
 - Exposure compensation (optional)  
 - Depth regularization (optional)  
 
----
+
 
 ## Dataset Format
 
@@ -253,7 +251,6 @@ The code expects COLMAP datasets in the following structure:
         └── points3D.bin
 ```
 
----
 
 ### Converting Your Own Images
 
@@ -269,7 +266,7 @@ This will:
 2. Undistort images  
 3. Optionally resize images (creates 1/2, 1/4, 1/8 resolution versions)  
 
----
+
 
 ## Benchmarking
 
@@ -277,7 +274,6 @@ This will:
 
 The method has been evaluated on standard 3DGS benchmarks. The DWT loss improves reconstruction quality, particularly for high-frequency details, while maintaining real-time rendering performance.
 
----
 
 ## Citation
 
@@ -296,7 +292,6 @@ If you use this code, please cite the original 3D Gaussian Splatting paper and o
 }
 ```
 
----
 
 ## License
 
