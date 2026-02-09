@@ -23,7 +23,7 @@ This codebase supports **multispectral datasets**, which capture information acr
 
 ![Spectral Grid](assets/spectral_grid_3plants.png)
 
-**Important**: For multispectral datasets, you should run the **multispectral DWT 3DGS** variant. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum.
+**Important**: For multispectral datasets, you should run the **multi-DWTGS** variant. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum.
 
 
 
