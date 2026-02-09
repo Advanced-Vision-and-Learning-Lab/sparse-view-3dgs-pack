@@ -23,9 +23,10 @@ This codebase supports **multispectral datasets**, which capture information acr
 
 ![Spectral Grid](assets/spectral_grid_3plants.png)
 
-**Important**: For multispectral datasets, you should run the **multi-DWTGS** variant. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum.
-
-
+**Important**: For multispectral datasets, you should run the **multi-DWTGS variant using `train_nir.py`**. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum. Do not use the standard `train.py` script for multispectral datasets.
+Multi-Spectral Data Loading:
+RGB+NIR image pairs: Supports datasets with separate RGB and NIR images for true 3D multispectral reconstruction
+Image format: The images/ folder should contain RGB images (3-channel- Pseudo RGB) and nir/folder should contain NIR channel for RGB+NIR datasets, and use the colmap on top of RGB images.
 
 ## Installation
 
