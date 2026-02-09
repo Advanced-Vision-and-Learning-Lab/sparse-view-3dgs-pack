@@ -177,7 +177,7 @@ If you use this code or find it useful in your research, please cite both the or
   author  = {Salehi, Shima and Agashe, Atharva and McFarland, Andrew J. and Peeples, Joshua},
   journal = {arXiv preprint arXiv:2601.17185},
   year    = {2026},
-  url     = {https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/}
+  url     = {https://arxiv.org/abs/2601.17185}
 }
 
 ## License
