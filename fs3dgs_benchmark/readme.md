@@ -2,7 +2,7 @@
 # FS3DGS Benchmarking Pipeline
 
 <figure>
-  <img src="../image/fsgs_benchmarking.png" alt="Benchmarking Pipeline">
+  <img src="../assets/fsgs_benchmarking.png" alt="Benchmarking Pipeline">
   <figcaption>
       Figure 1: Overall figure describing the flow of the pipeline. The figure is adapted from <a href="https://arxiv.org/abs/2202.08341">Anomalib</a> for comparison.
   </figcaption>

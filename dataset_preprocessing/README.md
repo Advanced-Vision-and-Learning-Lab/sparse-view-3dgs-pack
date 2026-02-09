@@ -31,7 +31,7 @@ Example:
 
 The following diagram illustrates the dataset pipeline workflow:
 
-![Dataset Pipeline Flow](docs/dataset_preprocessing_pipeline.png)
+![Dataset Pipeline Flow](../assets/dataset_preprocessing_pipeline.png)
 
 ------------------------------------------------------------------------
 

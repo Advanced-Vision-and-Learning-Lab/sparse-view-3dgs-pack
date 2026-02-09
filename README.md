@@ -10,7 +10,7 @@ Interactive visualizations, results, and additional details are available on our
 
 DWT 3DGS extends the standard 3D Gaussian Splatting pipeline by incorporating wavelet-domain loss functions. The method applies a 2-level Haar wavelet decomposition to both predicted and ground truth images, computing Charbonnier losses on selected subbands. This enables better preservation of fine details and improved reconstruction of high-frequency content.
 
-![Wavelet Decomposition](image/wavlet_dec.png)
+![Wavelet Decomposition](assets/wavlet_dec.png)
 
 The wavelet decomposition separates images into multiple frequency subbands:
 
@@ -21,7 +21,7 @@ The wavelet decomposition separates images into multiple frequency subbands:
 
 By weighting different subbands, the method can emphasize low-frequency structure while still capturing important high-frequency details.
 
-![Results](image/result.png)
+
 
 ---
 
@@ -34,11 +34,11 @@ DWT 3DGS enhances 3D Gaussian Splatting by:
 3. **Adaptive Scaling**: Using running-mean ratio scaling to balance DWT loss with the base L1 + SSIM loss  
 4. **GPU Optimization**: Fast GPU-accelerated wavelet decomposition using pure PyTorch operations  
 
-![Low Frequency](image/LF.png)
+![Low Frequency](assets/LF.png)
 
 The method is particularly effective at preserving high-frequency details that are often lost in standard reconstruction approaches, while maintaining the real-time rendering capabilities of 3D Gaussian Splatting.
 
----
+
 
 ## Multispectral Dataset
 
@@ -46,11 +46,11 @@ This codebase supports training on **multispectral datasets**, which capture inf
 
 
 
-![Spectral Grid](image/spectral_grid_3plants.png)
+![Spectral Grid](assets/spectral_grid_3plants.png)
 
 **Important**: For multispectral datasets, you should run the **multispectral DWT 3DGS** variant. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum.
 
----
+
 
 ## Installation
 
@@ -86,7 +86,6 @@ pip install submodules/simple-knn
 
 
 
----
 
 ## Running DWT 3DGS
 
@@ -98,7 +97,7 @@ To train a model with DWT loss enabled (default):
 python train.py -s <path to COLMAP or NeRF Synthetic dataset>
 ```
 
----
+
 
 ### DWT-Specific Parameters
 
@@ -127,7 +126,7 @@ python train.py -s <path to dataset> \
 
 The default configuration emphasizes low-frequency components (LL1 and LL2) which typically contain the most important structural information. High-frequency subbands can be enabled for enhanced detail preservation.
 
----
+
 
 ### Rendering
 
@@ -155,7 +154,7 @@ python render.py -m <path to trained model>
 python metrics.py -m <path to trained model>
 ```
 
----
+
 
 
 
@@ -180,7 +179,6 @@ The code expects COLMAP datasets in the following structure:
         └── points3D.bin
 ```
 
----
 
 ### Converting Your Own Images
 
@@ -196,11 +194,11 @@ This will:
 2. Undistort images  
 3. Optionally resize images (creates 1/2, 1/4, 1/8 resolution versions)  
 
----
+
 
 ## Benchmarking
 
-![Benchmarking](image/fsgs_benchmarking.png)
+![Benchmarking](assets/fsgs_benchmarking.png)
 
 The method has been evaluated on standard 3DGS benchmarks. The DWT loss improves reconstruction quality, particularly for high-frequency details, while maintaining real-time rendering performance.
 

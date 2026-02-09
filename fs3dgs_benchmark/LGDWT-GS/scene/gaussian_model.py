@@ -18,12 +18,12 @@ import json
 from utils.system_utils import mkdir_p
 from plyfile import PlyData, PlyElement
 from utils.sh_utils import RGB2SH
-from sknn_3dgs._C import distCUDA2
+from simple_knn._C import distCUDA2
 from utils.graphics_utils import BasicPointCloud
 from utils.general_utils import strip_symmetric, build_scaling_rotation
 
 try:
-    from dgr_3dgs import SparseGaussianAdam
+    from diff_gaussian_rasterization import SparseGaussianAdam
 except:
     pass
 
@@ -60,7 +60,6 @@ class GaussianModel:
         self.max_radii2D = torch.empty(0)
         self.xyz_gradient_accum = torch.empty(0)
         self.denom = torch.empty(0)
-        self.tmp_radii = torch.empty(0)
         self.optimizer = None
         self.percent_dense = 0
         self.spatial_lr_scale = 0
@@ -78,7 +77,6 @@ class GaussianModel:
             self.max_radii2D,
             self.xyz_gradient_accum,
             self.denom,
-            self.tmp_radii,
             self.optimizer.state_dict(),
             self.spatial_lr_scale,
         )
@@ -94,13 +92,11 @@ class GaussianModel:
         self.max_radii2D, 
         xyz_gradient_accum, 
         denom,
-        tmp_radii,
         opt_dict, 
         self.spatial_lr_scale) = model_args
         self.training_setup(training_args)
         self.xyz_gradient_accum = xyz_gradient_accum
         self.denom = denom
-        self.tmp_radii = tmp_radii
         self.optimizer.load_state_dict(opt_dict)
 
     @property
@@ -174,7 +170,6 @@ class GaussianModel:
         self._rotation = nn.Parameter(rots.requires_grad_(True))
         self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
-        self.tmp_radii = torch.zeros((self.get_xyz.shape[0]), device="cuda")
         self.exposure_mapping = {cam_info.image_name: idx for idx, cam_info in enumerate(cam_infos)}
         self.pretrained_exposures = None
         exposure = torch.eye(3, 4, device="cuda")[None].repeat(len(cam_infos), 1, 1)
@@ -406,11 +401,10 @@ class GaussianModel:
         self._scaling = optimizable_tensors["scaling"]
         self._rotation = optimizable_tensors["rotation"]
 
-        # Reset all auxiliary tensors to match the new number of Gaussians
+        self.tmp_radii = torch.cat((self.tmp_radii, new_tmp_radii))
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
-        self.tmp_radii = torch.zeros((self.get_xyz.shape[0]), device="cuda")
 
     def densify_and_split(self, grads, grad_threshold, scene_extent, N=2):
         n_init_points = self.get_xyz.shape[0]
@@ -431,12 +425,7 @@ class GaussianModel:
         new_features_dc = self._features_dc[selected_pts_mask].repeat(N,1,1)
         new_features_rest = self._features_rest[selected_pts_mask].repeat(N,1,1)
         new_opacity = self._opacity[selected_pts_mask].repeat(N,1)
-        # Handle tmp_radii safely - if it's out of sync, create zeros
-        if self.tmp_radii.shape[0] == self._xyz.shape[0]:
-            new_tmp_radii = self.tmp_radii[selected_pts_mask].repeat(N)
-        else:
-            # tmp_radii is out of sync, create zeros for selected points
-            new_tmp_radii = torch.zeros(selected_pts_mask.sum() * N, device=self._xyz.device)
+        new_tmp_radii = self.tmp_radii[selected_pts_mask].repeat(N)
 
         self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacity, new_scaling, new_rotation, new_tmp_radii)
 
@@ -456,12 +445,7 @@ class GaussianModel:
         new_scaling = self._scaling[selected_pts_mask]
         new_rotation = self._rotation[selected_pts_mask]
 
-        # Handle tmp_radii safely - if it's out of sync, create zeros
-        if self.tmp_radii.shape[0] == self._xyz.shape[0]:
-            new_tmp_radii = self.tmp_radii[selected_pts_mask]
-        else:
-            # tmp_radii is out of sync, create zeros for selected points
-            new_tmp_radii = torch.zeros(selected_pts_mask.sum(), device=self._xyz.device)
+        new_tmp_radii = self.tmp_radii[selected_pts_mask]
 
         self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, new_tmp_radii)
 
@@ -487,153 +471,3 @@ class GaussianModel:
     def add_densification_stats(self, viewspace_point_tensor, update_filter):
         self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor.grad[update_filter,:2], dim=-1, keepdim=True)
         self.denom[update_filter] += 1
-
-    def densify_from_cvcf_coordinates(self, densification_coords, viewpoint_cam, extent, rendered_depth=None, N=2):
-        """
-        Densify Gaussians at CVCF-selected 2D coordinates using actual depth.
-        
-        Args:
-            densification_coords: (K, 2) tensor of (x, y) pixel coordinates
-            viewpoint_cam: Camera object for coordinate transformation
-            extent: Scene extent for scaling
-            rendered_depth: (H, W) tensor of actual rendered depth values
-            N: Number of children to spawn per coordinate
-        """
-        if len(densification_coords) == 0:
-            return
-            
-        # Safety check: ensure tmp_radii is initialized
-        if not hasattr(self, 'tmp_radii') or self.tmp_radii is None or self.tmp_radii.numel() == 0:
-            self.tmp_radii = torch.zeros((self.get_xyz.shape[0]), device=self.get_xyz.device)
-            
-        device = densification_coords.device
-        K = len(densification_coords)
-        
-        # Debug: Print coordinate ranges (commented out for cleaner output)
-        # print(f"CVCF: Processing {K} coordinates")
-        # print(f"CVCF: Coordinate range: x=[{densification_coords[:, 0].min():.1f}, {densification_coords[:, 0].max():.1f}], y=[{densification_coords[:, 1].min():.1f}, {densification_coords[:, 1].max():.1f}]")
-        
-        # Convert 2D coordinates to 3D world coordinates using actual depth
-        
-        # Get camera parameters
-        FoVx = viewpoint_cam.FoVx
-        FoVy = viewpoint_cam.FoVy
-        image_width = viewpoint_cam.image_width
-        image_height = viewpoint_cam.image_height
-        
-        # Convert pixel coordinates to normalized device coordinates (NDC)
-        x_ndc = 2.0 * densification_coords[:, 0] / image_width - 1.0
-        y_ndc = 2.0 * densification_coords[:, 1] / image_height - 1.0
-        
-        # Use actual depth if available, otherwise fallback to middle of scene
-        if rendered_depth is not None:
-            # Handle depth map with batch dimension
-            if len(rendered_depth.shape) == 3 and rendered_depth.shape[0] == 1:
-                # Remove batch dimension: (1, H, W) -> (H, W)
-                rendered_depth = rendered_depth.squeeze(0)
-            
-            # Ensure coordinates are within bounds
-            x_coords = densification_coords[:, 0].long().clamp(0, image_width - 1)
-            y_coords = densification_coords[:, 1].long().clamp(0, image_height - 1)
-            
-            # Check if depth map has the expected dimensions
-            if rendered_depth.shape[0] != image_height or rendered_depth.shape[1] != image_width:
-                depth = torch.full((K,), extent * 0.5, device=device, dtype=torch.float32)
-            else:
-                try:
-                    # Sample inverse depth at the densification coordinates
-                    inv_depth = rendered_depth[y_coords, x_coords]
-                    
-                    # Debug: Print depth statistics
-                    print(f"CVCF: Inverse depth range: [{inv_depth.min():.6f}, {inv_depth.max():.6f}]")
-                    print(f"CVCF: Inverse depth mean: {inv_depth.mean():.6f}")
-                    
-                    # Convert inverse depth to actual depth
-                    # Handle invalid inverse depth values (NaN, inf, or too close/far)
-                    valid_inv_depth_mask = torch.isfinite(inv_depth) & (inv_depth > 1e-6) & (inv_depth < 1e6)
-                    
-                    if valid_inv_depth_mask.all():
-                        # Convert inverse depth to actual depth
-                        depth = 1.0 / inv_depth
-                        # Clamp depth to reasonable range
-                        depth = torch.clamp(depth, 0.1, extent * 2.0)
-                        print(f"CVCF: Actual depth range: [{depth.min():.3f}, {depth.max():.3f}]")
-                        print(f"CVCF: Actual depth mean: {depth.mean():.3f}")
-                    else:
-                        # Replace invalid depths with reasonable fallback
-                        depth = torch.full((K,), extent * 0.5, device=device, dtype=torch.float32)
-                        print(f"CVCF: Using fallback depth due to invalid inverse depth values")
-                except Exception as e:
-                    depth = torch.full((K,), extent * 0.5, device=device, dtype=torch.float32)
-                    print(f"CVCF: Exception in depth processing: {e}")
-        else:
-            # Fallback to middle of scene if no depth available
-            depth = torch.full((K,), extent * 0.5, device=device, dtype=torch.float32)
-        
-        # Convert NDC to camera space coordinates
-        tan_fovx = torch.tan(torch.tensor(FoVx * 0.5, device=device))
-        tan_fovy = torch.tan(torch.tensor(FoVy * 0.5, device=device))
-        
-        x_cam = x_ndc * tan_fovx * depth
-        y_cam = y_ndc * tan_fovy * depth
-        z_cam = depth  # z_cam should be the depth values themselves
-        
-        # Stack to get camera space points
-        points_cam = torch.stack([x_cam, y_cam, z_cam], dim=1)  # (K, 3)
-        
-        # Transform from camera space to world space
-        camera_center = viewpoint_cam.camera_center
-        world_view_transform = viewpoint_cam.world_view_transform
-        
-        # Add homogeneous coordinate
-        points_cam_homo = torch.cat([points_cam, torch.ones(K, 1, device=device)], dim=1)  # (K, 4)
-        
-        # Transform to world space
-        view_to_world = torch.inverse(world_view_transform)
-        points_world_homo = torch.matmul(points_cam_homo, view_to_world.T)  # (K, 4)
-        points_world = points_world_homo[:, :3]  # (K, 3)
-        
-        # Debug: Print 3D world coordinates
-        print(f"CVCF: World coordinates range: x=[{points_world[:, 0].min():.3f}, {points_world[:, 0].max():.3f}], y=[{points_world[:, 1].min():.3f}, {points_world[:, 1].max():.3f}], z=[{points_world[:, 2].min():.3f}, {points_world[:, 2].max():.3f}]")
-        
-        # Add some randomness to break the clustering
-        # Add small random offsets to world coordinates
-        noise_scale = extent * 0.1  # 10% of scene extent
-        random_noise = torch.randn_like(points_world) * noise_scale
-        points_world_noisy = points_world + random_noise
-        
-        # Create new Gaussians at these 3D locations
-        # Use reasonable default parameters
-        new_xyz = points_world_noisy.repeat(N, 1)  # (K*N, 3)
-        
-        # Default scaling (larger initial size for visibility)
-        default_scaling = torch.tensor([0.1, 0.1, 0.1], device=device) * extent  # 10x larger
-        new_scaling = default_scaling.unsqueeze(0).repeat(K*N, 1)
-        new_scaling = self.scaling_inverse_activation(new_scaling)
-        
-        # Default rotation (identity)
-        new_rotation = torch.zeros(K*N, 4, device=device)
-        new_rotation[:, 0] = 1.0  # w component of quaternion
-        
-        # Default features (bright red color for visibility)
-        new_features_dc = torch.zeros(K*N, 1, 3, device=device)
-        new_features_dc[:, 0, 0] = 1.0  # R - bright red
-        new_features_dc[:, 0, 1] = 0.0  # G
-        new_features_dc[:, 0, 2] = 0.0  # B
-        
-        new_features_rest = torch.zeros(K*N, (self.max_sh_degree + 1) ** 2 - 1, 3, device=device)
-        
-        # Default opacity (more opaque for visibility)
-        new_opacity = torch.full((K*N, 1), 0.8, device=device)  # Much more opaque
-        new_opacity = self.inverse_opacity_activation(new_opacity)
-        
-        # Default radii
-        new_tmp_radii = torch.zeros(K*N, device=device)
-        
-        # Add new Gaussians
-        old_count = self.get_xyz.shape[0]
-        self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacity, new_scaling, new_rotation, new_tmp_radii)
-        new_count = self.get_xyz.shape[0]
-        
-        print(f"CVCF: Added {K*N} new Gaussians at {K} CVCF-selected locations")
-        print(f"CVCF: Gaussian count: {old_count} → {new_count} (added {new_count - old_count})")

@@ -1,118 +1,0 @@
-Optimizing output/sorghum
-Output folder: output/sorghum [18/11 00:54:26]
-Tensorboard not available: not logging progress [18/11 00:54:26]
-[DEBUG] Scene loading with n_views=0, point_cloud_type=dense [18/11 00:54:26]
-[DEBUG] readColmapSceneInfo called with n_views=0 [18/11 00:54:26]
-------------LLFF HOLD------------- [18/11 00:54:26]
-HAHAHHAHAHAHAHAH: sorghum_rgb [18/11 00:54:26]
-Reading camera 1/36Reading camera 2/36Reading camera 3/36Reading camera 4/36Reading camera 5/36Reading camera 6/36Reading camera 7/36Reading camera 8/36Reading camera 9/36Reading camera 10/36Reading camera 11/36Reading camera 12/36Reading camera 13/36Reading camera 14/36Reading camera 15/36Reading camera 16/36Reading camera 17/36Reading camera 18/36Reading camera 19/36Reading camera 20/36Reading camera 21/36Reading camera 22/36Reading camera 23/36Reading camera 24/36Reading camera 25/36Reading camera 26/36Reading camera 27/36Reading camera 28/36Reading camera 29/36Reading camera 30/36Reading camera 31/36Reading camera 32/36Reading camera 33/36Reading camera 34/36Reading camera 35/36Reading camera 36/36 [18/11 00:54:26]
-[DEBUG] Before n_views filtering: 31 training cameras, 5 test cameras [18/11 00:54:26]
-[DEBUG] n_views parameter: 0 [18/11 00:54:26]
-[DEBUG] Point cloud type: dense, n_views: 0 [18/11 00:54:26]
-[DEBUG] Using sparse point cloud [18/11 00:54:26]
-[DEBUG] Looking for sparse point cloud at: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/sorghum/sparse/0/points3D.ply [18/11 00:54:26]
-[DEBUG] Final point cloud has 626 points from: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/sorghum/sparse/0/points3D.ply [18/11 00:54:26]
-Loading Training Cameras [18/11 00:54:26]
-Loading Test Cameras [18/11 00:54:26]
-Number of points at initialisation :  626 [18/11 00:54:26]
-
-[ITER 1000] Evaluating test: L1 0.03927392773330212 PSNR 28.216955947875977 [18/11 00:54:36]
-
-[ITER 1000] Evaluating train: L1 0.048342715948820114 PSNR 26.339221191406253 [18/11 00:54:36]
-
-Training complete. [18/11 00:54:36]
-Optimizing output/cotton
-Output folder: output/cotton [18/11 00:54:38]
-Tensorboard not available: not logging progress [18/11 00:54:38]
-[DEBUG] Scene loading with n_views=0, point_cloud_type=dense [18/11 00:54:38]
-[DEBUG] readColmapSceneInfo called with n_views=0 [18/11 00:54:38]
-------------LLFF HOLD------------- [18/11 00:54:38]
-HAHAHHAHAHAHAHAH: cotton_rgb [18/11 00:54:38]
-Reading camera 1/10Reading camera 2/10Reading camera 3/10Reading camera 4/10Reading camera 5/10Reading camera 6/10Reading camera 7/10Reading camera 8/10Reading camera 9/10Reading camera 10/10 [18/11 00:54:38]
-[DEBUG] Before n_views filtering: 8 training cameras, 2 test cameras [18/11 00:54:38]
-[DEBUG] n_views parameter: 0 [18/11 00:54:38]
-[DEBUG] Point cloud type: dense, n_views: 0 [18/11 00:54:38]
-[DEBUG] Using sparse point cloud [18/11 00:54:38]
-[DEBUG] Looking for sparse point cloud at: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/cotton/sparse/0/points3D.ply [18/11 00:54:38]
-Converting point3d.bin to .ply, will happen only the first time you open the scene. [18/11 00:54:38]
-[DEBUG] Converting from: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/cotton/sparse/0/points3D.bin [18/11 00:54:38]
-[DEBUG] Loaded 355 points from sparse reconstruction [18/11 00:54:38]
-[DEBUG] Final point cloud has 355 points from: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/cotton/sparse/0/points3D.ply [18/11 00:54:38]
-Loading Training Cameras [18/11 00:54:38]
-Loading Test Cameras [18/11 00:54:38]
-Number of points at initialisation :  355 [18/11 00:54:38]
-
-[ITER 1000] Evaluating test: L1 0.03156627342104912 PSNR 28.71408748626709 [18/11 00:54:47]
-
-[ITER 1000] Evaluating train: L1 0.040833478420972825 PSNR 26.57703552246094 [18/11 00:54:47]
-
-Training complete. [18/11 00:54:47]
-Optimizing output/grape
-Output folder: output/grape [18/11 00:54:49]
-Tensorboard not available: not logging progress [18/11 00:54:49]
-[DEBUG] Scene loading with n_views=0, point_cloud_type=dense [18/11 00:54:49]
-[DEBUG] readColmapSceneInfo called with n_views=0 [18/11 00:54:49]
-------------LLFF HOLD------------- [18/11 00:54:49]
-HAHAHHAHAHAHAHAH: grape_rgb [18/11 00:54:49]
-Reading camera 1/24Reading camera 2/24Reading camera 3/24Reading camera 4/24Reading camera 5/24Reading camera 6/24Reading camera 7/24Reading camera 8/24Reading camera 9/24Reading camera 10/24Reading camera 11/24Reading camera 12/24Reading camera 13/24Reading camera 14/24Reading camera 15/24Reading camera 16/24Reading camera 17/24Reading camera 18/24Reading camera 19/24Reading camera 20/24Reading camera 21/24Reading camera 22/24Reading camera 23/24Reading camera 24/24 [18/11 00:54:49]
-[DEBUG] Before n_views filtering: 21 training cameras, 3 test cameras [18/11 00:54:49]
-[DEBUG] n_views parameter: 0 [18/11 00:54:49]
-[DEBUG] Point cloud type: dense, n_views: 0 [18/11 00:54:49]
-[DEBUG] Using sparse point cloud [18/11 00:54:49]
-[DEBUG] Looking for sparse point cloud at: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/grape/sparse/0/points3D.ply [18/11 00:54:49]
-[DEBUG] Final point cloud has 767 points from: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/grape/sparse/0/points3D.ply [18/11 00:54:49]
-Loading Training Cameras [18/11 00:54:49]
-Loading Test Cameras [18/11 00:54:49]
-Number of points at initialisation :  767 [18/11 00:54:49]
-
-[ITER 1000] Evaluating test: L1 0.03114444576203823 PSNR 26.310600916544594 [18/11 00:54:57]
-
-[ITER 1000] Evaluating train: L1 0.0326359186321497 PSNR 27.039036941528323 [18/11 00:54:57]
-
-Training complete. [18/11 00:54:57]
-Optimizing output/houseplant
-Output folder: output/houseplant [18/11 00:54:59]
-Tensorboard not available: not logging progress [18/11 00:54:59]
-[DEBUG] Scene loading with n_views=0, point_cloud_type=dense [18/11 00:54:59]
-[DEBUG] readColmapSceneInfo called with n_views=0 [18/11 00:54:59]
-------------LLFF HOLD------------- [18/11 00:54:59]
-HAHAHHAHAHAHAHAH: houseplant_rgb [18/11 00:54:59]
-Reading camera 1/16Reading camera 2/16Reading camera 3/16Reading camera 4/16Reading camera 5/16Reading camera 6/16Reading camera 7/16Reading camera 8/16Reading camera 9/16Reading camera 10/16Reading camera 11/16Reading camera 12/16Reading camera 13/16Reading camera 14/16Reading camera 15/16Reading camera 16/16 [18/11 00:54:59]
-[DEBUG] Before n_views filtering: 14 training cameras, 2 test cameras [18/11 00:54:59]
-[DEBUG] n_views parameter: 0 [18/11 00:54:59]
-[DEBUG] Point cloud type: dense, n_views: 0 [18/11 00:54:59]
-[DEBUG] Using sparse point cloud [18/11 00:54:59]
-[DEBUG] Looking for sparse point cloud at: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/houseplant/sparse/0/points3D.ply [18/11 00:54:59]
-[DEBUG] Final point cloud has 615 points from: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/houseplant/sparse/0/points3D.ply [18/11 00:54:59]
-Loading Training Cameras [18/11 00:54:59]
-Loading Test Cameras [18/11 00:55:00]
-Number of points at initialisation :  615 [18/11 00:55:00]
-
-[ITER 1000] Evaluating test: L1 0.030390944331884384 PSNR 28.31809425354004 [18/11 00:55:10]
-
-[ITER 1000] Evaluating train: L1 0.0310261644423008 PSNR 28.393484497070315 [18/11 00:55:10]
-
-Training complete. [18/11 00:55:10]
-Optimizing output/tomato
-Output folder: output/tomato [18/11 00:55:12]
-Tensorboard not available: not logging progress [18/11 00:55:12]
-[DEBUG] Scene loading with n_views=0, point_cloud_type=dense [18/11 00:55:12]
-[DEBUG] readColmapSceneInfo called with n_views=0 [18/11 00:55:12]
-------------LLFF HOLD------------- [18/11 00:55:12]
-HAHAHHAHAHAHAHAH: tomato_rgb [18/11 00:55:12]
-Reading camera 1/20Reading camera 2/20Reading camera 3/20Reading camera 4/20Reading camera 5/20Reading camera 6/20Reading camera 7/20Reading camera 8/20Reading camera 9/20Reading camera 10/20Reading camera 11/20Reading camera 12/20Reading camera 13/20Reading camera 14/20Reading camera 15/20Reading camera 16/20Reading camera 17/20Reading camera 18/20Reading camera 19/20Reading camera 20/20 [18/11 00:55:12]
-[DEBUG] Before n_views filtering: 17 training cameras, 3 test cameras [18/11 00:55:12]
-[DEBUG] n_views parameter: 0 [18/11 00:55:12]
-[DEBUG] Point cloud type: dense, n_views: 0 [18/11 00:55:12]
-[DEBUG] Using sparse point cloud [18/11 00:55:12]
-[DEBUG] Looking for sparse point cloud at: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/tomato/sparse/0/points3D.ply [18/11 00:55:12]
-[DEBUG] Final point cloud has 819 points from: /home/grads/a/atharvagashe22/AVLL/3DR/Bench_test/FS3DGS-Benchmarking-package/data/greenhouse_dataset_final2/tomato/sparse/0/points3D.ply [18/11 00:55:12]
-Loading Training Cameras [18/11 00:55:12]
-Loading Test Cameras [18/11 00:55:12]
-Number of points at initialisation :  819 [18/11 00:55:12]
-
-[ITER 1000] Evaluating test: L1 0.033248716965317726 PSNR 27.08387565612793 [18/11 00:55:22]
-
-[ITER 1000] Evaluating train: L1 0.03225256726145744 PSNR 26.872312927246096 [18/11 00:55:22]
-
-Training complete. [18/11 00:55:22]
