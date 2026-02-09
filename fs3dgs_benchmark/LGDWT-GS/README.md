@@ -1,6 +1,7 @@
 # LGDWT-GS:Local Global Discrete Wavelet Transform for Enhanced 3D Gaussian Splatting
 
-LGDWT-GS extends the standard 3D Gaussian Splatting pipeline by introducing local and global wavelet-domain supervision. The method applies a Haar wavelet decomposition to both predicted and ground-truth rendered images and adds wavelet-based L1 losses on selected subbands to the standard photometric loss. This formulation enables the model to preserve global structural consistency while also recovering local fine-grained details, leading to improved reconstruction quality, particularly under sparse-view conditions. To capture local details, LGDWT-GS focuses on high-frequency information embedded within low-frequency baches.
+LGDWT-GS extends the standard 3D Gaussian Splatting pipeline by introducing local and global wavelet-domain supervision. The method applies a Haar wavelet decomposition to both predicted and ground-truth rendered images and adds wavelet-based L1 losses on selected subbands to the standard photometric loss. 
+
 Interactive visualizations,Dataset, results, and additional details are available on our project website: **https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/**
 
 
@@ -75,28 +76,15 @@ python train.py -s <path to COLMAP or NeRF Synthetic dataset>
 
 ### DWT-Specific Parameters
 
-```bash
-python train.py -s <path to dataset> \
-    --dwt_enable True \
-    --dwt_weight 0.5 \
-    --dwt_ll1_weight 1.0 \
-    --dwt_ll2_weight 0.5 \
-    --dwt_lh1_weight 0.0 \
-    --dwt_hl1_weight 0.0 \
-    --dwt_hh1_weight 0.0 \
-    --dwt_lh2_weight 0.0 \
-    --dwt_hl2_weight 0.0 \
-    --dwt_hh2_weight 0.0
-```
 
 **DWT Parameters:**
 
-- `--dwt_enable`: Enable or disable DWT loss (default: True)  
-- `--dwt_weight`: Global weight for DWT loss (default: 0.5)  
-- `--dwt_ll1_weight`: Weight for Level 1 LL subband (default: 1.0)  
-- `--dwt_ll2_weight`: Weight for Level 2 LL subband (default: 0.5)  
-- `--dwt_lh1_weight`, `--dwt_hl1_weight`, `--dwt_hh1_weight`: Weights for Level 1 high-frequency subbands (default: 0.0)  
-- `--dwt_lh2_weight`, `--dwt_hl2_weight`, `--dwt_hh2_weight`: Weights for Level 2 high-frequency subbands (default: 0.0)  
+- `--dwt_enable`: Enable or disable DWT loss   
+- `--dwt_weight`: Global weight for DWT loss 
+- `--dwt_ll1_weight`: Weight for Global Low frequency
+- `--dwt_ll2_weight`: Weight for Local Low frequency
+- `--dwt_lh1_weight`, `--dwt_hl1_weight`, `--dwt_hh1_weight`:Weights for Global high frequency
+- `--dwt_lh2_weight`, `--dwt_hl2_weight`, `--dwt_hh2_weight`:Weights for Local high frequency
 
 The default configuration emphasizes low-frequency components (LL1 and LL2) which typically contain the most important structural information. High-frequency subbands can be enabled for enhanced detail preservation.
 
