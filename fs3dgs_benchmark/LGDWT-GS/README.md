@@ -1,56 +1,30 @@
-# DWT 3DGS: Discrete Wavelet Transform for Enhanced 3D Gaussian Splatting
+# LGDWT-GS:Local Global Discrete Wavelet Transform for Enhanced 3D Gaussian Splatting
 
-This repository implements **DWT 3DGS**, an enhanced version of 3D Gaussian Splatting that incorporates Discrete Wavelet Transform (DWT) loss functions to improve high-frequency detail preservation and reconstruction quality.
+LGDWT-GS extends the standard 3D Gaussian Splatting pipeline by introducing local and global wavelet-domain supervision. The method applies a Haar wavelet decomposition to both predicted and ground-truth rendered images and adds wavelet-based L1 losses on selected subbands to the standard photometric loss. This formulation enables the model to preserve global structural consistency while also recovering local fine-grained details, leading to improved reconstruction quality, particularly under sparse-view conditions. To capture local details, LGDWT-GS focuses on high-frequency information embedded within low-frequency baches.
+Interactive visualizations,Dataset, results, and additional details are available on our project website: **https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/**
 
-![Method Overview](/fs3dgs_benchmark/assets/method1.png)
 
----
 
-## Overview
 
-DWT 3DGS extends the standard 3D Gaussian Splatting pipeline by incorporating wavelet-domain loss functions. The method applies a 2-level Haar wavelet decomposition to both predicted and ground truth images, computing Charbonnier losses on selected subbands. This enables better preservation of fine details and improved reconstruction of high-frequency content.
 
-![Wavelet Decomposition](assets/wavlet_dec.png)
 
-The wavelet decomposition separates images into multiple frequency subbands:
 
-- **LL (Low-Low)**: Low-frequency approximation containing the main structure  
-- **LH (Low-High)**: Horizontal high-frequency details  
-- **HL (High-Low)**: Vertical high-frequency details  
-- **HH (High-High)**: Diagonal high-frequency details  
-
-By weighting different subbands, the method can emphasize low-frequency structure while still capturing important high-frequency details.
-
-![Results](assets/result.png)
 
 ---
 
-## Method
 
-DWT 3DGS enhances 3D Gaussian Splatting by:
 
-1. **Wavelet Decomposition**: Applying 2-level Haar wavelet transform to decompose images into frequency subbands  
-2. **Multi-scale Loss**: Computing Charbonnier losses on selected wavelet subbands (LL1, LL2, and optionally high-frequency bands)  
-3. **Adaptive Scaling**: Using running-mean ratio scaling to balance DWT loss with the base L1 + SSIM loss  
-4. **GPU Optimization**: Fast GPU-accelerated wavelet decomposition using pure PyTorch operations  
-
-![Low Frequency](assets/LF.png)
-
-The method is particularly effective at preserving high-frequency details that are often lost in standard reconstruction approaches, while maintaining the real-time rendering capabilities of 3D Gaussian Splatting.
-
----
 
 ## Multispectral Dataset
 
-This codebase supports training on **multispectral datasets**, which capture information across multiple spectral bands beyond the visible RGB spectrum. Multispectral imaging enables enhanced analysis and reconstruction of scenes with rich spectral information, making it valuable for applications in agriculture, remote sensing, and scientific imaging.
+This codebase supports **multispectral datasets**, which capture information across multiple spectral bands beyond the visible RGB spectrum. Multispectral imaging enables enhanced analysis and reconstruction of scenes with rich spectral information, making it valuable for applications in agriculture, remote sensing, and scientific imaging.
 
-![Multispectral Results](assets/multispectral_result.png)
 
-![Spectral Grid](assets/spectral_grid_3plants.png)
 
-**Important**: For multispectral datasets, you should run the **multispectral DWT 3DGS** variant. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum.
 
----
+**Important**: For multispectral datasets, you should run the **multi-DWTGS** variant. The multispectral version extends the standard DWT loss computation to work across all spectral bands, ensuring consistent quality and detail preservation across the full spectrum.
+
+
 
 ## Installation
 
@@ -84,9 +58,8 @@ pip install submodules/diff-gaussian-rasterization
 pip install submodules/simple-knn
 ```
 
-![Setup](assets/setup.png)
 
----
+
 
 ## Running DWT 3DGS
 
@@ -98,7 +71,7 @@ To train a model with DWT loss enabled (default):
 python train.py -s <path to COLMAP or NeRF Synthetic dataset>
 ```
 
----
+
 
 ### DWT-Specific Parameters
 
@@ -127,7 +100,7 @@ python train.py -s <path to dataset> \
 
 The default configuration emphasizes low-frequency components (LL1 and LL2) which typically contain the most important structural information. High-frequency subbands can be enabled for enhanced detail preservation.
 
----
+
 
 ### Rendering
 
@@ -155,84 +128,11 @@ python render.py -m <path to trained model>
 python metrics.py -m <path to trained model>
 ```
 
----
 
-## Packages and Utilities
 
-This codebase includes several custom packages and utilities specifically created for DWT-based training.
 
-### Core DWT Utilities (`utils/loss_utils.py`)
 
-The main DWT functionality is implemented in `utils/loss_utils.py`:
 
-- **`get_dwt_subbands(x)`**  
-  - Fast GPU-accelerated 2-level Haar wavelet decomposition  
-  - Input: PyTorch tensor of shape `(N, C, H, W)`  
-  - Returns: Dictionary with 8 subbands: `{"LL1", "LH1", "HL1", "HH1", "LL2", "LH2", "HL2", "HH2"}`  
-  - Optimized for GPU computation using depthwise convolutions  
-  - No external dependencies beyond PyTorch  
-
-- **`charbonnier_loss(pred, target, epsilon=1e-3)`**  
-  - Robust loss function for subband comparison  
-  - More stable than L2 loss for high-frequency content  
-  - Includes epsilon parameter for numerical stability  
-  - Formula: `sqrt((pred - target)^2 + epsilon^2)`  
-
-- **Wavelet Error Field (WEF) utilities**  
-  - `compute_wef_maps()`: Compute error maps in wavelet space  
-  - `make_heatmap_rgb()`: Visualize error maps as RGB heatmaps  
-  - `compute_wef_all_subbands()`: Compute errors for all subbands  
-  - `make_wef_grid_image()`: Create grid visualizations of wavelet errors  
-
----
-
-### Training Integration (`train.py`)
-
-The DWT loss is seamlessly integrated into the training loop:
-
-- **Automatic Scaling**: Running-mean ratio scaling balances DWT loss with base L1 + SSIM loss  
-- **TensorBoard Logging**: All DWT subband losses are logged for monitoring  
-- **Efficient Computation**: GPU-accelerated wavelet decomposition during training  
-- **Flexible Weighting**: Per-subband weights allow fine-grained control  
-
----
-
-### Testing and Validation
-
-- **`test_pytorch_wavelets.py`**  
-  - Validation script for DWT subband computation  
-  - Tests wavelet decomposition correctness  
-  - Validates subband shapes and properties  
-  - Includes fallback implementation testing  
-
-- **`DWT_Scaling_Test.ipynb`**  
-  - Jupyter notebook for interactive testing  
-  - Test DWT loss scaling on real images  
-  - Visualize wavelet subbands  
-  - Experiment with different weight configurations  
-
----
-
-### Dataset Readers (`scene/dataset_readers.py`)
-
-Extended dataset readers support:
-
-- Standard COLMAP datasets  
-- NeRF Synthetic datasets  
-- Multispectral datasets (with proper channel handling)  
-
----
-
-### Gaussian Model (`scene/gaussian_model.py`)
-
-The Gaussian model implementation supports:
-
-- Standard 3DGS optimization  
-- DWT-enhanced loss computation  
-- Exposure compensation (optional)  
-- Depth regularization (optional)  
-
----
 
 ## Dataset Format
 
@@ -253,7 +153,6 @@ The code expects COLMAP datasets in the following structure:
         └── points3D.bin
 ```
 
----
 
 ### Converting Your Own Images
 
@@ -269,34 +168,31 @@ This will:
 2. Undistort images  
 3. Optionally resize images (creates 1/2, 1/4, 1/8 resolution versions)  
 
----
+
 
 ## Benchmarking
 
-![Benchmarking](assets/fsgs_benchmarking.png)
+
 
 The method has been evaluated on standard 3DGS benchmarks. The DWT loss improves reconstruction quality, particularly for high-frequency details, while maintaining real-time rendering performance.
 
----
 
+
+---
 ## Citation
 
-If you use this code, please cite the original 3D Gaussian Splatting paper and our DWT extension:
+If you use this code or find it useful in your research, please cite both the original 3D Gaussian Splatting paper and our LGDWT-GS work.
+
+### LGDWT-GS
 
 ```bibtex
-@Article{kerbl3Dgaussians,
-    author       = {Kerbl, Bernhard and Kopanas, Georgios and Leimk{\"u}hler, Thomas and Drettakis, George},
-    title        = {3D Gaussian Splatting for Real-Time Radiance Field Rendering},
-    journal      = {ACM Transactions on Graphics},
-    number       = {4},
-    volume       = {42},
-    month        = {July},
-    year         = {2023},
-    url          = {https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/}
+@article{salehi2026lgdwt,
+  title   = {LGDWT-GS: Local and Global Discrete Wavelet-Regularized 3D Gaussian Splatting for Sparse-View Scene Reconstruction},
+  author  = {Salehi, Shima and Agashe, Atharva and McFarland, Andrew J. and Peeples, Joshua},
+  journal = {arXiv preprint arXiv:2601.17185},
+  year    = {2026},
+  url     = {https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/}
 }
-```
-
----
 
 ## License
 
