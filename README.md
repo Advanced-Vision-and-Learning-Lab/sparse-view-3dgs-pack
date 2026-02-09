@@ -84,7 +84,7 @@ pip install submodules/diff-gaussian-rasterization
 pip install submodules/simple-knn
 ```
 
-![Setup](image/setup.png)
+
 
 ---
 
