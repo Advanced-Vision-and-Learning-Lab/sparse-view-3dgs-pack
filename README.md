@@ -77,9 +77,9 @@ python train.py -s <path to COLMAP or NeRF Synthetic dataset>
 **DWT Parameters:**
 
 - `--dwt_enable`: Enable or disable DWT loss (default: True)  
-- `--dwt_weight`: Global weight for DWT loss (default: 0.5)  
-- `--dwt_ll1_weight`: Weight for global LL subband (default: 1.0)  
-- `--dwt_ll2_weight`: Weight for  local LL subband (default: 0.5)  
+- `--dwt_weight`: Global weight for DWT loss 
+- `--dwt_ll1_weight`: Weight for global LL subband   
+- `--dwt_ll2_weight`: Weight for  local LL subband  
 - `--dwt_lh1_weight`, `--dwt_hl1_weight`, `--dwt_hh1_weight`
 - `--dwt_lh2_weight`, `--dwt_hl2_weight`, `--dwt_hh2_weight`
 
