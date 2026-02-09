@@ -8,19 +8,16 @@ Interactive visualizations, results, and additional details are available on our
 
 
 ## Overview
-
-DWT 3DGS extends the standard 3D Gaussian Splatting pipeline by incorporating wavelet-domain loss functions. The method applies a 2-level Haar wavelet decomposition to both predicted and ground truth images, computing Charbonnier losses on selected subbands. This enables better preservation of fine details and improved reconstruction of high-frequency content.
-
+LGDWT-GS extends the standard 3D Gaussian Splatting pipeline by introducing local and global wavelet-domain supervision. The method applies a Haar wavelet decomposition to both predicted and ground-truth rendered images and adds wavelet-based L1 losses on selected subbands to the standard photometric loss. This formulation enables the model to preserve global structural consistency while also recovering local fine-grained details, leading to improved reconstruction quality, particularly under sparse-view conditions. To capture local details, LGDWT-GS focuses on high-frequency information embedded within low-frequency baches.
 ![Wavelet Decomposition](assets/wavlet_dec.png)
 
-The wavelet decomposition separates images into multiple frequency subbands:
+The wavelet decomposition separates each image into multiple frequency subbands at different scales:
 
-- **LL (Low-Low)**: Low-frequency approximation containing the main structure  
-- **LH (Low-High)**: Horizontal high-frequency details  
-- **HL (High-Low)**: Vertical high-frequency details  
-- **HH (High-High)**: Diagonal high-frequency details  
+- LL (Low–Low): Low-frequency approximation components 
+- LH (Low–High): Horizontal high-frequency components  
+- HL (High–Low): Vertical high-frequency components  
+- HH (High–High): Diagonal high-frequency components  
 
-By weighting different subbands, the method can emphasize low-frequency structure while still capturing important high-frequency details.
 
 
 
