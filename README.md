@@ -1,7 +1,7 @@
 # LGDWT-GS:Local Global Discrete Wavelet Transform for Enhanced 3D Gaussian Splatting
 
 LGDWT-GS extends the standard 3D Gaussian Splatting pipeline by introducing local and global wavelet-domain supervision. The method applies a Haar wavelet decomposition to both predicted and ground-truth rendered images and adds wavelet-based L1 losses on selected subbands to the standard photometric loss. This formulation enables the model to preserve global structural consistency while also recovering local fine-grained details, leading to improved reconstruction quality, particularly under sparse-view conditions. To capture local details, LGDWT-GS focuses on high-frequency information embedded within low-frequency baches.
-Interactive visualizations, results, and additional details are available on our project website: **https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/**
+Interactive visualizations,Dataset, results, and additional details are available on our project website: **https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/**
 
 ![Method Overview](/assets/method1.png)
 
