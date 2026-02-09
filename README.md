@@ -1,11 +1,11 @@
 # LGDWT-GS:Local Global Discrete Wavelet Transform for Enhanced 3D Gaussian Splatting
 
 This repository implements **LGDWT-GS**, an enhanced version of 3D Gaussian Splatting that incorporates Discrete Wavelet Transform (DWT) loss functions to improve high-frequency detail preservation and reconstruction quality.
-
+Interactive visualizations, results, and additional details are available on our project website: **https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/**
 ![Method Overview](image/method1.png)
 
 ---
-## 🌐 Project Website
+
 
 Interactive visualizations, results, and additional details are available on our project website:
 
@@ -282,24 +282,7 @@ This will:
 
 The method has been evaluated on standard 3DGS benchmarks. The DWT loss improves reconstruction quality, particularly for high-frequency details, while maintaining real-time rendering performance.
 
----
 
-## Citation
-
-If you use this code, please cite the original 3D Gaussian Splatting paper and our DWT extension:
-
-```bibtex
-@Article{kerbl3Dgaussians,
-    author       = {Kerbl, Bernhard and Kopanas, Georgios and Leimk{\"u}hler, Thomas and Drettakis, George},
-    title        = {3D Gaussian Splatting for Real-Time Radiance Field Rendering},
-    journal      = {ACM Transactions on Graphics},
-    number       = {4},
-    volume       = {42},
-    month        = {July},
-    year         = {2023},
-    url          = {https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/}
-}
-```
 
 ---
 ## 📖 Citation
