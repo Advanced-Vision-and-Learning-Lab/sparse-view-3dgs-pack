@@ -180,7 +180,7 @@ The method has been evaluated on standard 3DGS benchmarks. The DWT loss improves
 
 
 ---
-## 📖 Citation
+## Citation
 
 If you use this code or find it useful in your research, please cite both the original 3D Gaussian Splatting paper and our LGDWT-GS work.
 
