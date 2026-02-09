@@ -44,7 +44,7 @@ The method is particularly effective at preserving high-frequency details that a
 
 This codebase supports training on **multispectral datasets**, which capture information across multiple spectral bands beyond the visible RGB spectrum. Multispectral imaging enables enhanced analysis and reconstruction of scenes with rich spectral information, making it valuable for applications in agriculture, remote sensing, and scientific imaging.
 
-![Multispectral Results](image/multispectral_result.png)
+
 
 ![Spectral Grid](image/spectral_grid_3plants.png)
 
