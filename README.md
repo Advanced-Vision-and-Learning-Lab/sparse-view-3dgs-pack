@@ -4,12 +4,7 @@ This repository implements **LGDWT-GS**, an enhanced version of 3D Gaussian Spla
 Interactive visualizations, results, and additional details are available on our project website: **https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/**
 ![Method Overview](image/method1.png)
 
----
 
-
-Interactive visualizations, results, and additional details are available on our project website:
-
-👉 **https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/**
 
 ## Overview
 
