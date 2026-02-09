@@ -2,7 +2,7 @@
 
 This repository implements **DWT 3DGS**, an enhanced version of 3D Gaussian Splatting that incorporates Discrete Wavelet Transform (DWT) loss functions to improve high-frequency detail preservation and reconstruction quality.
 
-![Method Overview](assets/method1.png)
+![Method Overview](fs3dgs_benchmark/assets/method1.png)
 
 ---
 
