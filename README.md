@@ -1,10 +1,15 @@
-# DWT 3DGS: Discrete Wavelet Transform for Enhanced 3D Gaussian Splatting
+# LGDWT-GS:Local Global Discrete Wavelet Transform for Enhanced 3D Gaussian Splatting
 
-This repository implements **DWT 3DGS**, an enhanced version of 3D Gaussian Splatting that incorporates Discrete Wavelet Transform (DWT) loss functions to improve high-frequency detail preservation and reconstruction quality.
+This repository implements **LGDWT-GS**, an enhanced version of 3D Gaussian Splatting that incorporates Discrete Wavelet Transform (DWT) loss functions to improve high-frequency detail preservation and reconstruction quality.
 
 ![Method Overview](image/method1.png)
 
 ---
+## 🌐 Project Website
+
+Interactive visualizations, results, and additional details are available on our project website:
+
+👉 **https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/**
 
 ## Overview
 
@@ -297,6 +302,20 @@ If you use this code, please cite the original 3D Gaussian Splatting paper and o
 ```
 
 ---
+## 📖 Citation
+
+If you use this code or find it useful in your research, please cite both the original 3D Gaussian Splatting paper and our LGDWT-GS work.
+
+### LGDWT-GS
+
+```bibtex
+@article{salehi2026lgdwt,
+  title   = {LGDWT-GS: Local and Global Discrete Wavelet-Regularized 3D Gaussian Splatting for Sparse-View Scene Reconstruction},
+  author  = {Salehi, Shima and Agashe, Atharva and McFarland, Andrew J. and Peeples, Joshua},
+  journal = {arXiv preprint arXiv:2601.17185},
+  year    = {2026},
+  url     = {https://advanced-vision-and-learning-lab.github.io/LGDWT-GS-website/}
+}
 
 ## License
 
