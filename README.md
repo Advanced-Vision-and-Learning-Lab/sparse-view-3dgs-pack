@@ -74,14 +74,15 @@ python train.py -s <path to COLMAP or NeRF Synthetic dataset>
 ```
 
 
+
 **DWT Parameters:**
 
-- `--dwt_enable`: Enable or disable DWT loss (default: True)  
+- `--dwt_enable`: Enable or disable DWT loss   
 - `--dwt_weight`: Global weight for DWT loss 
-- `--dwt_ll1_weight`: Weight for global LL subband   
-- `--dwt_ll2_weight`: Weight for  local LL subband  
-- `--dwt_lh1_weight`, `--dwt_hl1_weight`, `--dwt_hh1_weight`
-- `--dwt_lh2_weight`, `--dwt_hl2_weight`, `--dwt_hh2_weight`
+- `--dwt_ll1_weight`: Weight for Global Low frequency
+- `--dwt_ll2_weight`: Weight for Local Low frequency
+- `--dwt_lh1_weight`, `--dwt_hl1_weight`, `--dwt_hh1_weight`:Weights for Global high frequency
+- `--dwt_lh2_weight`, `--dwt_hl2_weight`, `--dwt_hh2_weight`:Weights for Local high frequency
 
 The default configuration emphasizes low-frequency components (LL1 and LL2) which typically contain the most important structural information. High-frequency subbands can be enabled for enhanced detail preservation.
 
