@@ -25,24 +25,12 @@ By weighting different subbands, the method can emphasize low-frequency structur
 
 ---
 
-## Method
-
-DWT 3DGS enhances 3D Gaussian Splatting by:
-
-1. **Wavelet Decomposition**: Applying 2-level Haar wavelet transform to decompose images into frequency subbands  
-2. **Multi-scale Loss**: Computing Charbonnier losses on selected wavelet subbands (LL1, LL2, and optionally high-frequency bands)  
-3. **Adaptive Scaling**: Using running-mean ratio scaling to balance DWT loss with the base L1 + SSIM loss  
-4. **GPU Optimization**: Fast GPU-accelerated wavelet decomposition using pure PyTorch operations  
-
-![Low Frequency](assets/LF.png)
-
-The method is particularly effective at preserving high-frequency details that are often lost in standard reconstruction approaches, while maintaining the real-time rendering capabilities of 3D Gaussian Splatting.
 
 
 
 ## Multispectral Dataset
 
-This codebase supports training on **multispectral datasets**, which capture information across multiple spectral bands beyond the visible RGB spectrum. Multispectral imaging enables enhanced analysis and reconstruction of scenes with rich spectral information, making it valuable for applications in agriculture, remote sensing, and scientific imaging.
+This codebase supports **multispectral datasets**, which capture information across multiple spectral bands beyond the visible RGB spectrum. Multispectral imaging enables enhanced analysis and reconstruction of scenes with rich spectral information, making it valuable for applications in agriculture, remote sensing, and scientific imaging.
 
 
 
