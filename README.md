@@ -157,82 +157,9 @@ python metrics.py -m <path to trained model>
 
 ---
 
-## Packages and Utilities
 
-This codebase includes several custom packages and utilities specifically created for DWT-based training.
 
-### Core DWT Utilities (`utils/loss_utils.py`)
 
-The main DWT functionality is implemented in `utils/loss_utils.py`:
-
-- **`get_dwt_subbands(x)`**  
-  - Fast GPU-accelerated 2-level Haar wavelet decomposition  
-  - Input: PyTorch tensor of shape `(N, C, H, W)`  
-  - Returns: Dictionary with 8 subbands: `{"LL1", "LH1", "HL1", "HH1", "LL2", "LH2", "HL2", "HH2"}`  
-  - Optimized for GPU computation using depthwise convolutions  
-  - No external dependencies beyond PyTorch  
-
-- **`charbonnier_loss(pred, target, epsilon=1e-3)`**  
-  - Robust loss function for subband comparison  
-  - More stable than L2 loss for high-frequency content  
-  - Includes epsilon parameter for numerical stability  
-  - Formula: `sqrt((pred - target)^2 + epsilon^2)`  
-
-- **Wavelet Error Field (WEF) utilities**  
-  - `compute_wef_maps()`: Compute error maps in wavelet space  
-  - `make_heatmap_rgb()`: Visualize error maps as RGB heatmaps  
-  - `compute_wef_all_subbands()`: Compute errors for all subbands  
-  - `make_wef_grid_image()`: Create grid visualizations of wavelet errors  
-
----
-
-### Training Integration (`train.py`)
-
-The DWT loss is seamlessly integrated into the training loop:
-
-- **Automatic Scaling**: Running-mean ratio scaling balances DWT loss with base L1 + SSIM loss  
-- **TensorBoard Logging**: All DWT subband losses are logged for monitoring  
-- **Efficient Computation**: GPU-accelerated wavelet decomposition during training  
-- **Flexible Weighting**: Per-subband weights allow fine-grained control  
-
----
-
-### Testing and Validation
-
-- **`test_pytorch_wavelets.py`**  
-  - Validation script for DWT subband computation  
-  - Tests wavelet decomposition correctness  
-  - Validates subband shapes and properties  
-  - Includes fallback implementation testing  
-
-- **`DWT_Scaling_Test.ipynb`**  
-  - Jupyter notebook for interactive testing  
-  - Test DWT loss scaling on real images  
-  - Visualize wavelet subbands  
-  - Experiment with different weight configurations  
-
----
-
-### Dataset Readers (`scene/dataset_readers.py`)
-
-Extended dataset readers support:
-
-- Standard COLMAP datasets  
-- NeRF Synthetic datasets  
-- Multispectral datasets (with proper channel handling)  
-
----
-
-### Gaussian Model (`scene/gaussian_model.py`)
-
-The Gaussian model implementation supports:
-
-- Standard 3DGS optimization  
-- DWT-enhanced loss computation  
-- Exposure compensation (optional)  
-- Depth regularization (optional)  
-
----
 
 ## Dataset Format
 
