@@ -15,9 +15,18 @@ Interactive visualizations,Dataset, results, and additional details are availabl
 
 
 
+
 ## Multispectral Dataset
 
 This codebase supports **multispectral datasets**, which capture information across multiple spectral bands beyond the visible RGB spectrum. Multispectral imaging enables enhanced analysis and reconstruction of scenes with rich spectral information, making it valuable for applications in agriculture, remote sensing, and scientific imaging.
+
+### 📦 Dataset Download
+
+The multispectral dataset is publicly available on Zenodo.
+
+🔗 **[Download here](https://doi.org/10.5281/zenodo.18838172)**
+
+Please cite the dataset if you use it in your research.
 
 
 
