@@ -104,39 +104,23 @@ class OptimizationParams(ParamGroup):
         self.dwt_weight = 0.5
         # Level 1 subbands (1/2 resolution)
         self.dwt_ll1_weight = 1.0
-        self.dwt_lh1_weight = 0.0
-        self.dwt_hl1_weight = 0.0
+        self.dwt_lh1_weight = 1.0
+        self.dwt_hl1_weight = 1.0
         self.dwt_hh1_weight = 0.0
         # Level 2 subbands (1/4 resolution)
-        self.dwt_ll2_weight = 0.5
+        self.dwt_ll2_weight = 0.0
         self.dwt_lh2_weight = 0.0
         self.dwt_hl2_weight = 0.0
         self.dwt_hh2_weight = 0.0
-        # WEF/CVCF controls (disabled weighted MSE; keeping hooks only)
-        self.wef_enable_weighted_mse = False
-        self.wef_mse_gamma = 0.3
-
-        # CVCF (Cross-View Consistency Field) controls
-        self.cvcf_enable = False
-        self.cvcf_start_iter = 300
-        self.cvcf_refresh_interval = 200
-        self.cvcf_candidate_topk = 0.25  # top 25% of S_hat
-        self.cvcf_ratio_lower = 0.5
-        self.cvcf_ratio_upper = 2.0
-        self.cvcf_local_percentile = 0.60  # P60 local strength
-        self.cvcf_use_patch_zncc = False
-        self.cvcf_zncc_thresh = 0.4
-        self.cvcf_depth_agree_eps = 0.02  # 2% of scene depth range
-        self.cvcf_ema_decay = 0.7  # R <- ema_decay*R_old + (1-ema_decay)*R_new
-        self.cvcf_area_min = 48    # remove blobs smaller than this (pixels)
-        self.cvcf_nms_radius = 12  # px
-        self.cvcf_cooldown_iters = 300
-        self.cvcf_top_percent = 0.15  # top 15% of R for densification
-        self.cvcf_top_k = 200        # max K peaks to select
-        self.cvcf_edge_thresh = 0.3  # threshold for edge detection in M
-        self.cvcf_iso_children = 3   # isotropic children per peak
-        self.cvcf_aniso_children = 2 # anisotropic children per peak
+        # Patch-wise DWT parameters
+        self.patch_dwt_enable = True
+        self.patch_dwt_weight = 0.1  # beta
+        self.patch_size = 128
+        self.patch_percentile = 0.2  # lowest 20% ELF
+        self.patch_dwt_lh1_weight = 1.0
+        self.patch_dwt_hl1_weight = 1.0
         super().__init__(parser, "Optimization Parameters")
+
 
 def get_combined_args(parser : ArgumentParser):
     cmdlne_string = sys.argv[1:]
