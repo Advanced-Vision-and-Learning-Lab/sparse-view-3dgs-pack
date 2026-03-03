@@ -95,6 +95,44 @@ python train.py -s <path to COLMAP or NeRF Synthetic dataset>
 
 The default configuration emphasizes low-frequency components (LL1 and LL2) which typically contain the most important structural information. High-frequency subbands can be enabled for enhanced detail preservation.
 
+## DWT Regularization Parameters
+
+Our method introduces a multi-scale wavelet regularization strategy divided into **Global** and **Patch-wise** components. You can fine-tune these parameters to balance structural consistency and high-frequency detail preservation.
+
+### 1. Global DWT (Full Image)
+Controls the frequency matching across the entire rendered image.
+
+- `--dwt_enable`: Enable or disable the Global DWT loss.
+- `--dwt_weight`: Overall scaling factor for the global DWT loss.
+- **Level 1 Subbands (Fine details):**
+  - `--dwt_ll1_weight`: Weight for LL1 (Approximation/Structure).
+  - `--dwt_lh1_weight`: Weight for LH1 (Horizontal details).
+  - `--dwt_hl1_weight`: Weight for HL1 (Vertical details).
+  - `--dwt_hh1_weight`: Weight for HH1 (Diagonal details).
+- **Level 2 Subbands (Coarse details):**
+  - `--dwt_ll2_weight`: Weight for LL2.
+  - `--dwt_lh2_weight`, `--dwt_hl2_weight`, `--dwt_hh2_weight`: Weights for Level 2 high-frequency bands.
+
+### 2. Patch-wise DWT (Local Regions)
+Focuses regularization on specific regions of the image based on the Energy of Low Frequency (ELF).
+
+- `--patch_dwt_enable`: Enable or disable the Patch-wise DWT loss.
+- `--patch_dwt_weight`: Overall weight for the patch loss (Beta).
+- `--patch_size`: Size of the patches to extract (default: 128).
+- `--patch_percentile`: Threshold for patch selection based on ELF (e.g., `0.2` selects the top/bottom 20% of patches).
+- **Patch Subband Weights:**
+  - `--patch_dwt_lh1_weight`: Weight for LH1 in selected patches.
+  - `--patch_dwt_hl1_weight`: Weight for HL1 in selected patches.
+
+---
+
+### 💡 Hyperparameter Tuning & Dataset Sensitivity
+
+**Important Note:** The optimal values for these parameters diffrent from dataset to dataset.
+*   **Structure vs. Detail:** Increasing `LL` weights emphasizes structural correctness, while increasing `LH/HL/HH` weights improves texture sharpness.
+*   **Scene Characteristics:** Scenes with high-frequency textures (e.g., foliage) may require different subband weights compared to smoother scenes (e.g., indoor walls).
+
+
 
 
 ### Rendering
