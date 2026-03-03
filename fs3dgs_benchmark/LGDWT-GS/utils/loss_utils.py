@@ -101,58 +101,10 @@ def charbonnier_loss(pred: torch.Tensor, target: torch.Tensor, epsilon: float = 
     return torch.sqrt(diff * diff + (epsilon * epsilon)).mean()
 
 
-# class DWTLossScaler:
-#     """Automatic scaling for DWT losses to match base loss magnitude."""
-    
-#     def __init__(self, target_scale: float = 1.0, momentum: float = 0.9):
-#         self.target_scale = target_scale
-#         self.momentum = momentum
-#         self.dwt_scale = 1.0
-#         self.base_loss_ema = None
-#         self.dwt_loss_ema = None
-#         self.initialized = False
-        
-#     def update_scales(self, base_loss: torch.Tensor, dwt_loss: torch.Tensor):
-#         """Update scaling factors based on loss magnitudes."""
-#         base_mag = base_loss.item()
-#         dwt_mag = dwt_loss.item()
-        
-#         # Initialize EMAs
-#         if not self.initialized:
-#             self.base_loss_ema = base_mag
-#             self.dwt_loss_ema = dwt_mag
-#             self.initialized = True
-#         else:
-#             # Update EMAs
-#             self.base_loss_ema = self.momentum * self.base_loss_ema + (1 - self.momentum) * base_mag
-#             self.dwt_loss_ema = self.momentum * self.dwt_loss_ema + (1 - self.momentum) * dwt_mag
-        
-#         # Calculate scale factor to match target scale
-#         # IMPORTANT: Don't compensate for user's dwt_weight setting
-#         if self.dwt_loss_ema > 1e-8:  # Avoid division by zero
-#             # Target is to make DWT loss magnitude similar to base loss
-#             # But don't interfere with user's weight multiplier
-#             target_dwt_mag = self.base_loss_ema * self.target_scale
-#             self.dwt_scale = target_dwt_mag / self.dwt_loss_ema
-#         else:
-#             self.dwt_scale = 1.0
-    
-#     def scale_dwt_loss(self, dwt_loss: torch.Tensor) -> torch.Tensor:
-#         """Apply scaling to DWT loss."""
-#         return dwt_loss * self.dwt_scale
-    
-#     def get_scale_info(self) -> dict:
-#         """Get current scaling information."""
-#         return {
-#             'dwt_scale': self.dwt_scale,
-#             'base_loss_ema': self.base_loss_ema,
-#             'dwt_loss_ema': self.dwt_loss_ema,
-#             'target_scale': self.target_scale
-#         }
-
+from pytorch_wavelets import DWTForward
 
 def get_dwt_subbands(x: torch.Tensor) -> dict:
-    """Get all DWT subbands using fast GPU implementation.
+    """Get all DWT subbands using pytorch_wavelets package.
     
     Args:
         x: (N, C, H, W) input tensor
@@ -163,42 +115,37 @@ def get_dwt_subbands(x: torch.Tensor) -> dict:
     device = x.device
     dtype = x.dtype
     
-    # Haar wavelet filters
-    inv_sqrt2 = 1.0 / (2.0 ** 0.5)
-    h = torch.tensor([inv_sqrt2, inv_sqrt2], device=device, dtype=dtype).view(1, 1, 2)
-    g = torch.tensor([inv_sqrt2, -inv_sqrt2], device=device, dtype=dtype).view(1, 1, 2)
+    # Initialize DWT for 2 levels using Haar (db1) wavelet
+    # J=2 means it computes Level 1 and Level 2
+    # mode='symmetric' is similar to reflect padding
+    dwt = DWTForward(J=2, mode='symmetric', wave='db1').to(device)
     
-    # Construct 2D kernels via outer products
-    hh = (h.transpose(-1, -2) @ h).view(1, 1, 2, 2)  # LL
-    gh = (g.transpose(-1, -2) @ h).view(1, 1, 2, 2)  # LH
-    hg = (h.transpose(-1, -2) @ g).view(1, 1, 2, 2)  # HL
-    gg = (g.transpose(-1, -2) @ g).view(1, 1, 2, 2)  # HH
+    # Yl is the low-pass coefficients at the coarsest level (LL2)
+    # Yh is a list of high-pass coefficients at each level (fine to coarse)
+    # Yh[0] contains (LH1, HL1, HH1)
+    # Yh[1] contains (LH2, HL2, HH2)
+    Yl, Yh = dwt(x)
     
-    def dwt_level(x):
-        """Apply one level of DWT - fast GPU implementation."""
-        n, c, h, w = x.shape
-        
-        # Expand kernels for depthwise convolution
-        hh_exp = hh.expand(c, 1, 2, 2)
-        gh_exp = gh.expand(c, 1, 2, 2)
-        hg_exp = hg.expand(c, 1, 2, 2)
-        gg_exp = gg.expand(c, 1, 2, 2)
-        
-        # Apply reflect padding and convolution
-        x_pad = F.pad(x, (1, 1, 1, 1), mode='reflect')
-        
-        LL = F.conv2d(x_pad, hh_exp, stride=2, groups=c)
-        LH = F.conv2d(x_pad, gh_exp, stride=2, groups=c)
-        HL = F.conv2d(x_pad, hg_exp, stride=2, groups=c)
-        HH = F.conv2d(x_pad, gg_exp, stride=2, groups=c)
-        
-        return LL, LH, HL, HH
+    LL2 = Yl
     
-    # Level 1 DWT
-    LL1, LH1, HL1, HH1 = dwt_level(x)
+    # Level 1 high-pass
+    LH1, HL1, HH1 = Yh[0][:,:,0,:,:], Yh[0][:,:,1,:,:], Yh[0][:,:,2,:,:]
     
-    # Level 2 DWT (on LL1)
-    LL2, LH2, HL2, HH2 = dwt_level(LL1)
+    # Level 2 high-pass
+    LH2, HL2, HH2 = Yh[1][:,:,0,:,:], Yh[1][:,:,1,:,:], Yh[1][:,:,2,:,:]
+    
+    # To get LL1, we can run 1-level DWT 
+
+    
+    dwt1 = DWTForward(J=1, mode='symmetric', wave='db1').to(device)
+    
+    # Level 1
+    LL1, Yh1 = dwt1(x)
+    LH1, HL1, HH1 = Yh1[0][:,:,0,:,:], Yh1[0][:,:,1,:,:], Yh1[0][:,:,2,:,:]
+    
+    # Level 2 (input is LL1)
+    LL2, Yh2 = dwt1(LL1)
+    LH2, HL2, HH2 = Yh2[0][:,:,0,:,:], Yh2[0][:,:,1,:,:], Yh2[0][:,:,2,:,:]
     
     return {
         'LL1': LL1, 'LH1': LH1, 'HL1': HL1, 'HH1': HH1,
@@ -382,134 +329,114 @@ def compute_wef_all_subbands(pred: torch.Tensor, gt: torch.Tensor) -> dict:
     return maps
 
 
+# ------------------------------
+# ELF and Patch-wise DWT Utilities
+# ------------------------------
 
-
-
-# # ------------------------------
-# # Selection maps (LL~, M, S, HH1~, veto) on RGB residuals
-# # ------------------------------
-
-# def _percentile95(x: torch.Tensor) -> torch.Tensor:
-#     """Compute 95th percentile per sample for (N,1,H,W) → (N,1,1,1)."""
-#     x_flat = x.view(x.shape[0], -1)
-#     # torch.quantile is available in recent PyTorch; fallback to topk if missing
-#     try:
-#         p = torch.quantile(x_flat, 0.95, dim=1, keepdim=True)
-#     except Exception:
-#         k = (x_flat.shape[1] * 95) // 100
-#         k = max(1, min(k, x_flat.shape[1]))
-#         topk, _ = torch.topk(x_flat, k, dim=1, largest=True)
-#         p = topk[:, -1:]
-#     p = p.view(-1, 1, 1, 1)
-#     return p.clamp(min=1e-6)
-
-
-def build_selection_maps(pred: torch.Tensor, gt: torch.Tensor, use_blur_ll2: bool = True,
-                         a: float = 1.0, b: float = 0.3) -> dict:
-    """Build selection maps using the working approach from CVCF tests.
+def compute_elf_map(image: torch.Tensor) -> torch.Tensor:
+    """Compute Energy of Low Frequency (ELF) map per pixel.
+    ELF(x, y) = ||LL(x, y)||1 / (||LL(x, y)||1 + ||HF(x, y)||1)
     
-    - Compute DWT subbands of pred and gt separately
-    - Compute error in each subband: |pred_band - gt_band|
-    - Normalize to 95th percentile
-    - M = a * LL_t + b * (LH_t + HL_t)
-    - S = M (use raw error values for better candidate selection)
-    - veto = clamp(HH1_t - 0.5, 0, 1)
+    Args:
+        image: (N, C, H, W) input image
+    
+    Returns:
+        elf_map: (N, 1, H, W) ELF scores in [0, 1], upsampled to input size.
     """
-    assert pred.shape == gt.shape
+    bands = get_dwt_subbands(image)
     
-    # Get DWT subbands for pred and gt separately
-    pred_bands = get_dwt_subbands(pred)
-    gt_bands = get_dwt_subbands(gt)
+    # L1 norm across channels
+    def l1(x): return torch.sum(torch.abs(x), dim=1, keepdim=True)
     
-    # Compute error in each subband
-    LL_t = torch.abs(pred_bands['LL1'] - gt_bands['LL1'])
-    LH_t = torch.abs(pred_bands['LH1'] - gt_bands['LH1'])
-    HL_t = torch.abs(pred_bands['HL1'] - gt_bands['HL1'])
-    HH1_t = torch.abs(pred_bands['HH1'] - gt_bands['HH1'])
+    LL = l1(bands['LL1'])
+    LH = l1(bands['LH1'])
+    HL = l1(bands['HL1'])
+    HH = l1(bands['HH1'])
     
-    # Normalize to 95th percentile
-    def normalize_95th(x):
-        flat = x.view(x.shape[0], -1)
-        p95 = torch.quantile(flat, 0.95, dim=1, keepdim=True)
-        p95 = p95.view(x.shape[0], 1, 1, 1)
-        return x / (p95 + 1e-8)
+    HF = LH + HL + HH
     
-    LL_t = normalize_95th(LL_t)
-    LH_t = normalize_95th(LH_t)
-    HL_t = normalize_95th(HL_t)
-    HH1_t = normalize_95th(HH1_t)
+    # Compute ELF at 1/2 resolution
+    # Add epsilon to denominator to avoid division by zero
+    elf_low = LL / (LL + HF + 1e-8)
     
+    # Upsample to full resolution
+    H, W = image.shape[-2:]
+    elf_map = F.interpolate(elf_low, size=(H, W), mode='bilinear', align_corners=False)
+    
+    return elf_map
 
-    # Compute M (multi-scale error)
-    M = a * LL_t + b * (LH_t + HL_t)
+def compute_patch_dwt_loss(pred: torch.Tensor, gt: torch.Tensor, elf_map: torch.Tensor, 
+                          patch_size: int = 128, percentile: float = 0.2,
+                          lh1_weight: float = 1.0, hl1_weight: float = 1.0) -> torch.Tensor:
+    """Compute Patch-wise DWT loss on regions with HIGH ELF (smooth areas).
     
-    # Use raw error values for better candidate selection (don't normalize to [0,1])
-    S = M
-    
-    return {
-        'LL_t': LL_t,
-        'LH_t': LH_t,
-        'HL_t': HL_t,
-        'HH1_t': HH1_t,
-        'M': M,
-        'S': S
-    }
-
-
-def build_selection_maps_simple(pred: torch.Tensor, gt: torch.Tensor,
-                                subbands: tuple = ('LL2', 'LH2', 'HL2'),
-                                band_scales: dict = None,
-                                a: float = 1.0, b: float = 0.3) -> dict:
-    """Simplified selection maps using only selected subbands, no blur, no veto.
-
-    Steps:
-      - Residual r = pred - gt
-      - DWT → selected bands
-      - Energy per band (squared), apply per-band scale
-      - Channel-mean, upsample to input size
-      - M = a*LL + b*(LH+HL) if those bands are present among selection; otherwise sum available
-      - S = M (no extra normalization)
+    Args:
+        pred: (N, C, H, W) rendered image
+        gt: (N, C, H, W) ground truth image
+        elf_map: (N, 1, H, W) ELF map computed from GT
+        patch_size: size of patches (default 128)
+        percentile: threshold for selecting HIGH-ELF patches (default 0.2 = top 20%)
+        lh1_weight: weight for LH1 subband loss
+        hl1_weight: weight for HL1 subband loss
+        
+    Returns:
+        loss: scalar tensor
     """
-    assert pred.shape == gt.shape
     N, C, H, W = pred.shape
-    residual = pred - gt
-    b = get_dwt_subbands(residual)
+    
+    # Unfold images into non-overlapping patches
+    stride = patch_size
+    
+    if H < patch_size or W < patch_size:
+        return torch.tensor(0.0, device=pred.device)
 
-    if band_scales is None:
-        band_scales = {'LL2': 4.0, 'LH2': 2.0, 'HL2': 2.0}
+    # Use unfold to extract patches
+    pred_patches = F.unfold(pred, kernel_size=patch_size, stride=stride)
+    gt_patches = F.unfold(gt, kernel_size=patch_size, stride=stride)
+    elf_patches = F.unfold(elf_map, kernel_size=patch_size, stride=stride)
+    
+    # Reshape to (N, L, C, H, W) roughly
+    L = pred_patches.shape[2]
+    
+    # Compute mean ELF per patch
+    patch_elf_means = elf_patches.mean(dim=1) # (N, L)
+    
+    # Determine threshold for HIGH ELF (smooth areas)
+    # We want top 'percentile' patches (e.g. top 20%)
+    all_elf_means = patch_elf_means.view(-1)
+    
+    # To get top 20%, we need the value at (1 - percentile) quantile
+    # e.g. if percentile=0.2, we want top 20%, so we look for 80th percentile value
+    k = int(all_elf_means.numel() * (1.0 - percentile))
+    k = max(1, k)
+    k = min(k, all_elf_means.numel())
+    
+    threshold, _ = torch.kthvalue(all_elf_means, k)
+    
+    # Select patches with HIGH ELF (Smooth areas)
+    mask = patch_elf_means >= threshold # (N, L)
+    
+    if mask.sum() == 0:
+        return torch.tensor(0.0, device=pred.device)
+    
+    # Extract selected patches
+    pred_patches = pred_patches.view(N, C, patch_size, patch_size, L).permute(0, 4, 1, 2, 3)
+    gt_patches = gt_patches.view(N, C, patch_size, patch_size, L).permute(0, 4, 1, 2, 3)
+    
+    # Flatten batch and patches
+    pred_sel = pred_patches[mask] # (N_sel, C, ps, ps)
+    gt_sel = gt_patches[mask]     # (N_sel, C, ps, ps)
+    
+    # Apply DWT to selected patches
+    pred_bands = get_dwt_subbands(pred_sel)
+    gt_bands = get_dwt_subbands(gt_sel)
+    
+    # Loss on HF bands (LH, HL, HH) - penalize high frequency in smooth areas
+    loss_LH = l1_loss(pred_bands['LH1'], gt_bands['LH1'])
+    loss_HL = l1_loss(pred_bands['HL1'], gt_bands['HL1'])
+    loss_HH = l1_loss(pred_bands['HH1'], gt_bands['HH1'])
 
-    # Prepare per-band maps at input res
-    def band_energy_up(k):
-        e = b[k] * b[k]
-        e = e * band_scales.get(k, 1.0)
-        e = e.mean(dim=1, keepdim=True)
-        return F.interpolate(e, size=(H, W), mode='bilinear', align_corners=False)
-
-    maps = {}
-    for k in subbands:
-        if k not in b:
-            raise ValueError(f"Unknown subband '{k}'")
-        maps[k] = band_energy_up(k)
-
-    # Build M using available components
-    LL_term = maps['LL2'] if 'LL2' in maps else 0.0
-    LH_term = maps['LH2'] if 'LH2' in maps else 0.0
-    HL_term = maps['HL2'] if 'HL2' in maps else 0.0
-    if isinstance(LL_term, float):
-        # No LL2 present; sum all available maps equally
-        acc = None
-        for v in maps.values():
-            acc = v if acc is None else (acc + v)
-        M = acc / max(1, len(maps))
-    else:
-        M = a * LL_term + b * (LH_term + HL_term)
-
-    S = M  # raw
-
-    return {
-        'S': S,
-        'M': M,
-        **{k: maps[k] for k in maps}
-    }
-
-
+    
+    loss = (lh1_weight * loss_LH) + (hl1_weight * loss_HL) + (0.5 * (lh1_weight + hl1_weight) * loss_HH)
+    
+    return loss
