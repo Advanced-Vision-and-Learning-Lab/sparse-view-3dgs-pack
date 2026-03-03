@@ -10,15 +10,13 @@
 #
 
 import os
-import numpy as np
-from PIL import Image
 import torch
-import torch.nn.functional as F
 from random import randint
 from utils.loss_utils import (
     l1_loss, ssim, get_dwt_subbands, charbonnier_loss,
-    compute_wef_maps, make_heatmap_rgb, compute_wef_all_subbands, make_wef_grid_image,
-    make_wef_grid_image_titled, build_selection_maps
+    make_heatmap_rgb, make_wef_grid_image,
+    make_wef_grid_image_titled, compute_elf_map, compute_patch_dwt_loss,
+    compute_wef_maps, compute_wef_all_subbands
 )
 from gaussian_renderer import render, network_gui
 import sys
@@ -145,183 +143,49 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             
             # Level 1 subbands (1/2 resolution)
             if opt.dwt_ll1_weight != 0.0:
-                total_dwt_loss += opt.dwt_ll1_weight * charbonnier_loss(pred_bands['LL1'], gt_bands['LL1'])
+                total_dwt_loss += opt.dwt_ll1_weight * l1_loss(pred_bands['LL1'], gt_bands['LL1'])
             if opt.dwt_lh1_weight != 0.0:
-                total_dwt_loss += opt.dwt_lh1_weight * charbonnier_loss(pred_bands['LH1'], gt_bands['LH1'])
+                total_dwt_loss += opt.dwt_lh1_weight * l1_loss(pred_bands['LH1'], gt_bands['LH1'])
             if opt.dwt_hl1_weight != 0.0:
-                total_dwt_loss += opt.dwt_hl1_weight * charbonnier_loss(pred_bands['HL1'], gt_bands['HL1'])
+                total_dwt_loss += opt.dwt_hl1_weight * l1_loss(pred_bands['HL1'], gt_bands['HL1'])
             if opt.dwt_hh1_weight != 0.0:
-                total_dwt_loss += opt.dwt_hh1_weight * charbonnier_loss(pred_bands['HH1'], gt_bands['HH1'])
+                total_dwt_loss += opt.dwt_hh1_weight * l1_loss(pred_bands['HH1'], gt_bands['HH1'])
             
             # Level 2 subbands (1/4 resolution)
             if opt.dwt_ll2_weight != 0.0:
-                total_dwt_loss += opt.dwt_ll2_weight * charbonnier_loss(pred_bands['LL2'], gt_bands['LL2'])
+                total_dwt_loss += opt.dwt_ll2_weight * l1_loss(pred_bands['LL2'], gt_bands['LL2'])
             if opt.dwt_lh2_weight != 0.0:
-                total_dwt_loss += opt.dwt_lh2_weight * charbonnier_loss(pred_bands['LH2'], gt_bands['LH2'])
+                total_dwt_loss += opt.dwt_lh2_weight * l1_loss(pred_bands['LH2'], gt_bands['LH2'])
             if opt.dwt_hl2_weight != 0.0:
-                total_dwt_loss += opt.dwt_hl2_weight * charbonnier_loss(pred_bands['HL2'], gt_bands['HL2'])
+                total_dwt_loss += opt.dwt_hl2_weight * l1_loss(pred_bands['HL2'], gt_bands['HL2'])
             if opt.dwt_hh2_weight != 0.0:
-                total_dwt_loss += opt.dwt_hh2_weight * charbonnier_loss(pred_bands['HH2'], gt_bands['HH2'])
+                total_dwt_loss += opt.dwt_hh2_weight * l1_loss(pred_bands['HH2'], gt_bands['HH2'])
             
             dwt_loss = total_dwt_loss
         
-        # Compute RGB-based selection maps for reweighting
-        sel_maps = build_selection_maps(
-            image.unsqueeze(0) if image.dim()==3 else image,
-            gt_image.unsqueeze(0) if gt_image.dim()==3 else gt_image,
-            a=1.0, b=0.3
-        )
-        S = sel_maps['S']      # (N,1,H,W)
-        # Soft integration weight map W = normalize(S) * (1 - veto)
-        # Normalize S per-sample to [0,1]
-        S_min = S.amin(dim=(-2, -1), keepdim=True)
-        S_max = S.amax(dim=(-2, -1), keepdim=True)
-        S_norm = (S - S_min) / (S_max - S_min + 1e-8)
-        veto = sel_maps.get('veto', torch.zeros_like(S))
-        W_soft = S_norm * (1.0 - veto)
-        
-        # Build hard mask from top 10% of W_soft (per-sample)
-        W_flat = W_soft.view(W_soft.shape[0], -1)
-        k = (W_flat.shape[1] * 10) // 100
-        k = max(1, int(k))
-        topk_vals, _ = torch.topk(W_flat, k, dim=1)
-        thr = topk_vals[:, -1:].view(W_soft.shape[0], 1, 1, 1)
-        hard_mask = (W_soft >= thr).float()
-        
-        # No veto for downstream S_hat (per your earlier request) -> use S directly
-        S_hat = S
-        
-        # CVCF: Candidate selection (top fraction of S_hat)
-        if opt.cvcf_enable and iteration >= opt.cvcf_start_iter and iteration % opt.cvcf_refresh_interval == 0:
-            # Compute candidate mask: top cvcf_candidate_topk fraction of S_hat using top-k approach
-            S_hat_flat = S_hat.view(S_hat.shape[0], -1)  # (N, H*W)
-            total_pixels = S_hat_flat.shape[1]
-            n_candidates = int(opt.cvcf_candidate_topk * total_pixels)
+        # Patch-wise DWT Loss (LGDWT-GS)
+        patch_loss = torch.tensor(0.0, device=image.device)
+        if opt.patch_dwt_enable:
+            pred_b = image.unsqueeze(0) if image.dim() == 3 else image
+            gt_b = gt_image.unsqueeze(0) if gt_image.dim() == 3 else gt_image
             
-            # Get top-k values
-            top_k_values, top_k_indices = torch.topk(S_hat_flat, n_candidates, dim=1)
-            threshold = top_k_values[:, -1:]  # Last (smallest) of top-k values
+            # Use GT for stable ELF map (as per paper Fig 3)
+            elf_map = compute_elf_map(gt_b)
             
-            # Reshape threshold to match S_hat shape
-            threshold = threshold.view(S_hat.shape[0], 1, 1, 1)
-            candidates_mask = (S_hat >= threshold).float()  # (N, 1, H, W)
-            
-            # Get candidate pixel coordinates
-            batch_size, channels, height, width = candidates_mask.shape
-            candidate_coords = []
-            for b in range(batch_size):
-                mask_b = candidates_mask[b, 0]  # (H, W)
-                y_coords, x_coords = torch.where(mask_b > 0.5)
-                coords = torch.stack([x_coords.float(), y_coords.float()], dim=1)  # (N_candidates, 2)
-                candidate_coords.append(coords)
-            
-            # Save CVCF outputs
-            cvcf_dir = os.path.join(dataset.model_path, "cvcf")
-            os.makedirs(cvcf_dir, exist_ok=True)
-            
-            # Save candidate mask as PNG
-            mask_np = candidates_mask[0, 0].cpu().numpy()  # (H, W)
-            mask_img = Image.fromarray((mask_np * 255).astype(np.uint8))
-            mask_img.save(os.path.join(cvcf_dir, f"candidates_mask_{iteration:06d}.png"))
-            
-            # Save candidate coordinates as tensor
-            if len(candidate_coords) > 0 and len(candidate_coords[0]) > 0:
-                torch.save(candidate_coords[0], os.path.join(cvcf_dir, f"candidates_coords_{iteration:06d}.pt"))
-                
-                # Simplified CVCF: Direct 2D-guided densification
-                try:
-                    # Find top-K peaks in S_hat for densification
-                    S_hat_flat = S_hat.view(S_hat.shape[0], -1)  # (N, H*W)
-                    top_k_values, top_k_indices = torch.topk(S_hat_flat, opt.cvcf_top_k, dim=1)
-                    
-                    # Convert flat indices to 2D coordinates
-                    height, width = S_hat.shape[-2:]
-                    y_coords = top_k_indices // width
-                    x_coords = top_k_indices % width
-                    
-                    # Create densification coordinates (batch, 2)
-                    densification_coords = torch.stack([x_coords.float(), y_coords.float()], dim=2)  # (N, K, 2)
-                    
-                    # Save densification coordinates
-                    torch.save(densification_coords[0], os.path.join(cvcf_dir, f"densification_coords_{iteration:06d}.pt"))
-                    
-                    # Log statistics
-                    n_densification_points = len(densification_coords[0])
-                    
-                    if TENSORBOARD_FOUND:
-                        tb_writer.add_scalar(f"CVCF/n_densification_points", n_densification_points, iteration)
-                        tb_writer.add_scalar(f"CVCF/densification_ratio", n_densification_points / len(candidate_coords[0]), iteration)
-                    
-                    print(f"[ITER {iteration}] CVCF: Selected {n_densification_points} points for densification (top {opt.cvcf_top_k} from {len(candidate_coords[0])} candidates)")
-                    
-                    # Actually perform CVCF-guided densification
-                    try:
-                        # Load the densification coordinates
-                        densification_coords = torch.load(os.path.join(cvcf_dir, f"densification_coords_{iteration:06d}.pt"))
-                        
-                        # Perform CVCF-guided densification with actual depth
-                        rendered_depth = render_pkg["depth"] if "depth" in render_pkg else None
-                        gaussians.densify_from_cvcf_coordinates(
-                            densification_coords, viewpoint_cam, scene.cameras_extent, rendered_depth=rendered_depth, N=opt.cvcf_iso_children
-                        )
-                        
-                        print(f"[ITER {iteration}] CVCF: Densification completed successfully")
-                        
-                    except Exception as e:
-                        print(f"[ITER {iteration}] CVCF: Densification execution failed: {e}")
-                    
-                except Exception as e:
-                    print(f"[ITER {iteration}] CVCF: Densification selection failed: {e}")
-            
-            # Log to TensorBoard
-            if TENSORBOARD_FOUND:
-                # Convert mask to tensor with proper shape (1, H, W) for TensorBoard
-                mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).float()
-                tb_writer.add_image(f"CVCF/candidates_mask", mask_tensor, iteration)
-                tb_writer.add_scalar(f"CVCF/n_candidates", len(candidate_coords[0]) if len(candidate_coords) > 0 else 0, iteration)
-                tb_writer.add_scalar(f"CVCF/candidate_ratio", opt.cvcf_candidate_topk, iteration)
-            
-            print(f"[ITER {iteration}] CVCF: Selected {len(candidate_coords[0]) if len(candidate_coords) > 0 else 0} candidates (top {opt.cvcf_candidate_topk*100:.1f}%)")
-        
-        # Schedule beta (0.4 -> 0.6 from iters 200 to 1000)
-        def lerp(a, b, t):
-            return a + (b - a) * t
-        if iteration < 200:
-            beta_now = 0.4
-        elif iteration < 1000:
-            t = (iteration - 200) / max(1, (1000 - 200))
-            beta_now = lerp(0.4, 0.6, t)
-        else:
-            beta_now = 0.6
-        alpha = 0.6
-        
-        # Upsample S_hat to match image resolution before computing w
-        image_h, image_w = image.shape[-2:]
-        S_hat_upsampled = F.interpolate(S_hat, size=(image_h, image_w), mode='bilinear', align_corners=False)
-        w = alpha + beta_now * S_hat_upsampled
-        # Detach, clamp and renormalize per-image to keep mean≈1.0
-        w = w.detach()
-        w = w.clamp(0.7, 1.3)
-        w = w / (w.mean(dim=(2,3), keepdim=True) + 1e-8)
+            # Compute loss on low-ELF patches
+            patch_loss = compute_patch_dwt_loss(
+                pred_b, gt_b, elf_map, 
+                patch_size=opt.patch_size, percentile=opt.patch_percentile,
+                lh1_weight=opt.patch_dwt_lh1_weight, hl1_weight=opt.patch_dwt_hl1_weight
+            )
 
         if FUSED_SSIM_AVAILABLE:
             ssim_value = fused_ssim(image.unsqueeze(0), gt_image.unsqueeze(0))
         else:
             ssim_value = ssim(image, gt_image)
 
-        # Base loss: (1-λ)*L1_w + λ*(1-SSIM), where L1_w uses per-pixel weight w
-        # w is already at image resolution from the upsampling above
-        l1_weighted = (w * torch.abs((image.unsqueeze(0) - gt_image.unsqueeze(0)))).mean()
-        base_loss = (1.0 - opt.lambda_dssim) * l1_weighted + opt.lambda_dssim * (1.0 - ssim_value)
-        
-        # Very soft local L1 over highest-error pixels (top 10% by W_soft)
-        abs_err = torch.abs(image.unsqueeze(0) - gt_image.unsqueeze(0))  # (1,3,H,W)
-        # Upsample mask to image resolution
-        hard_mask_up = F.interpolate(hard_mask, size=abs_err.shape[-2:], mode='nearest')  # (N,1,H,W)
-        # Match mask shape to abs_err channels
-        hard_mask_c = hard_mask_up.expand(-1, abs_err.shape[1], -1, -1)
-        l1_local = (hard_mask_c * abs_err).sum() / (hard_mask_c.sum() + 1e-8)
-        base_loss = base_loss + 0.05 * l1_local
+        # Base loss: (1-λ)*L1 + λ*(1-SSIM)
+        base_loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim_value)
         
         # User-specified running-mean ratio scaling for DWT
         if opt.dwt_enable:
@@ -332,6 +196,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             loss = base_loss + dwt_scale * dwt_loss
         else:
             loss = base_loss
+
+        # Add Patch-DWT loss
+        if opt.patch_dwt_enable:
+            loss = loss + opt.patch_dwt_weight * patch_loss
 
         # Depth regularization
         Ll1depth_pure = 0.0
@@ -367,6 +235,9 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background, 1., SPARSE_ADAM_AVAILABLE, None, dataset.train_test_exp), dataset.train_test_exp)
             
         # Log DWT losses, WEF heatmaps and scaling information
+        if tb_writer and opt.patch_dwt_enable:
+            tb_writer.add_scalar('train_loss_patches/patch_dwt_loss', patch_loss.item(), iteration)
+            
         if tb_writer and opt.dwt_enable:
             tb_writer.add_scalar('train_loss_patches/dwt_total', dwt_loss.item(), iteration)
             # Log current dynamic scale
@@ -375,73 +246,18 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 print(f"[ITER {iteration}] DWT Running-Mean Scaling: scale={dwt_running_mean:.3f}, "
                       f"dwt_raw={dwt_loss.item():.4f}, base_loss={base_loss.item():.4f}, total_loss={loss.item():.4f}")
             
-            # WEF logging at 3 uniform iterations across training
-            try:
-                total_iters = opt.iterations if opt.iterations > 0 else 1000
-                wef_checkpoints = {max(1, total_iters//4), max(1, total_iters//2), total_iters}
-                if iteration in wef_checkpoints:
-                    # Ensure (N,C,H,W)
-                    pred_batched = image.unsqueeze(0) if image.dim() == 3 else image
-                    gt_batched = gt_image.unsqueeze(0) if gt_image.dim() == 3 else gt_image
-                    wef_maps = compute_wef_maps(pred_batched, gt_batched)
-                    # Convert to RGB heatmaps
-                    hm_ll2 = make_heatmap_rgb(wef_maps['LL2'])
-                    hm_lh2 = make_heatmap_rgb(wef_maps['LH2'])
-                    hm_hl2 = make_heatmap_rgb(wef_maps['HL2'])
-                    hm_wef = make_heatmap_rgb(wef_maps['WEF'])
-                    # Log to TensorBoard (take first sample)
-                    tb_writer.add_image('WEF/LL2', hm_ll2[0], iteration)
-                    tb_writer.add_image('WEF/LH2', hm_lh2[0], iteration)
-                    tb_writer.add_image('WEF/HL2', hm_hl2[0], iteration)
-                    tb_writer.add_image('WEF/COMBINED', hm_wef[0], iteration)
-                    # Also save PNGs under the run folder
-                    wef_dir = os.path.join(dataset.model_path, 'wef')
-                    os.makedirs(wef_dir, exist_ok=True)
-                    def save_png(tchw, name):
-                        arr = (tchw.squeeze(0).permute(1,2,0).detach().cpu().clamp(0,1).numpy() * 255).astype(np.uint8)
-                        Image.fromarray(arr).save(os.path.join(wef_dir, f"{name}_{iteration}.png"))
-                    save_png(hm_ll2, 'wef_ll2')
-                    save_png(hm_lh2, 'wef_lh2')
-                    save_png(hm_hl2, 'wef_hl2')
-                    save_png(hm_wef, 'wef_combined')
-
-                    # Build only the requested subset (LL2, LH2, HL2, COMBINED) as a compact grid
-                    all_maps = compute_wef_all_subbands(pred_batched, gt_batched)
-
-                    # Save full 3x3 grid (8 subbands + COMBINED)
-                    grid1 = make_wef_grid_image_titled(
-                        all_maps,
-                        ['LL1','LH1','HL1','HH1','LL2','LH2','HL2','HH2','COMBINED'],
-                        tile_cols=3
-                    )
-                    grid1.save(os.path.join(wef_dir, f"wef_grid_all_{iteration}.png"))
-
-                    # Save compact 2x2 subset (LL2, LH2, HL2, COMBINED)
-                    subset_maps = {
-                        'LL2': all_maps['LL2'], 'LH2': all_maps['LH2'], 'HL2': all_maps['HL2'], 'COMBINED': all_maps['COMBINED']
-                    }
-                    grid2 = make_wef_grid_image_titled(subset_maps, ['LL2','LH2','HL2','COMBINED'], tile_cols=2)
-                    grid2.save(os.path.join(wef_dir, f"wef_grid_subset_{iteration}.png"))
-
-                    # Selection maps (LL~, M, S, HH1~, veto) saved once per checkpoint
-                    sel = build_selection_maps(pred_batched, gt_batched, use_blur_ll2=True, a=1.0, b=0.3)
-                    for k in ['LL_t','LH_t','HL_t','M','S','HH1_t','veto']:
-                        hm = make_heatmap_rgb(sel[k]) if k != 'veto' else torch.cat([sel[k]]*3, dim=1)
-                        save_png(hm, f"sel_{k}")
-            except Exception as e:
-                print(f"[WARN] WEF logging failed: {e}")
-
             # Log individual subband losses if they're being used
             if opt.dwt_ll1_weight != 0.0:
-                tb_writer.add_scalar('train_loss_patches/dwt_LL1', charbonnier_loss(pred_bands['LL1'], gt_bands['LL1']).item(), iteration)
+                tb_writer.add_scalar('train_loss_patches/dwt_LL1', l1_loss(pred_bands['LL1'], gt_bands['LL1']).item(), iteration)
             if opt.dwt_ll2_weight != 0.0:
-                tb_writer.add_scalar('train_loss_patches/dwt_LL2', charbonnier_loss(pred_bands['LL2'], gt_bands['LL2']).item(), iteration)
+                tb_writer.add_scalar('train_loss_patches/dwt_LL2', l1_loss(pred_bands['LL2'], gt_bands['LL2']).item(), iteration)
             if opt.dwt_lh1_weight != 0.0:
-                tb_writer.add_scalar('train_loss_patches/dwt_LH1', charbonnier_loss(pred_bands['LH1'], gt_bands['LH1']).item(), iteration)
+                tb_writer.add_scalar('train_loss_patches/dwt_LH1', l1_loss(pred_bands['LH1'], gt_bands['LH1']).item(), iteration)
             if opt.dwt_hl1_weight != 0.0:
-                tb_writer.add_scalar('train_loss_patches/dwt_HL1', charbonnier_loss(pred_bands['HL1'], gt_bands['HL1']).item(), iteration)
+                tb_writer.add_scalar('train_loss_patches/dwt_HL1', l1_loss(pred_bands['HL1'], gt_bands['HL1']).item(), iteration)
             if opt.dwt_hh1_weight != 0.0:
-                tb_writer.add_scalar('train_loss_patches/dwt_HH1', charbonnier_loss(pred_bands['HH1'], gt_bands['HH1']).item(), iteration)
+                tb_writer.add_scalar('train_loss_patches/dwt_HH1', l1_loss(pred_bands['HH1'], gt_bands['HH1']).item(), iteration)
+
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
